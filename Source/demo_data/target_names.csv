@@ -1,0 +1,1001 @@
+ConfirmedName,crm_id,status,ConfirmedIndustry
+John Thompson,T0100,Inactive,Telecom
+Emma H. Miller,T0101,Inactive,Education
+Lucas King,T0102,Active,Telecom
+Harper A. Martin,T0103,Inactive,Healthcare
+Isabella King,T0104,Inactive,Insurance
+Lucas Gonzalez,T0105,Active,Logistics
+David Smith,T0106,Inactive,Insurance
+Abigail Wilson,T0107,Active,Logistics
+Isabella-Aaryan Lopez,T0108,Active,Telecom
+Liam-Sophia King,T0109,Inactive,Hospitality
+Joseph T. Allen,T0110,Inactive,Insurance
+Daniel-Chris Lewis,T0111,Inactive,Hospitality
+Lucas Brown,T0112,Inactive,Education
+Maria-Michael Thomas,T0113,Active,Finance
+Lucas R. Martinez,T0114,Inactive,Insurance
+Harper T. Rodriguez,T0115,Active,Insurance
+Mia-Sara Martin,T0116,Inactive,Education
+Mason Wilson,T0117,Active,Insurance
+Ella Hernandez,T0118,Inactive,Retail
+James Wright,T0119,Inactive,Manufacturing
+Amelia Jones,T0120,Inactive,Technology
+Abigail C. White,T0121,Inactive,Technology
+Maria Clark,T0122,Inactive,Telecom
+Aisha King,T0123,Active,Telecom
+Ella Thomas,T0124,Active,Finance
+Maria Hall,T0125,Active,Logistics
+Joseph King,T0126,Inactive,Telecom
+Aryan R. Allen,T0127,Active,Insurance
+Chris Young,T0128,Inactive,Insurance
+Isabella Rodriguez,T0129,Active,Finance
+Amelia King,T0130,Inactive,Manufacturing
+Aaryan-Mohamed Wright,T0131,Inactive,Manufacturing
+Emma-Aaryan Wilson,T0132,Inactive,Hospitality
+Harper-Lucas Wright,T0133,Inactive,Insurance
+Mason Jones,T0134,Inactive,Logistics
+Lucas Rodriguez,T0135,Inactive,Education
+Evelyn Hernandez,T0136,Inactive,Technology
+Amelia-Noah Lopez,T0137,Inactive,Technology
+Sophia Wilson,T0138,Active,Finance
+Ana Jackson,T0139,Active,Education
+Chris Rodriguez,T0140,Active,Telecom
+Pat V. Allen,T0141,Active,Manufacturing
+Aryan Lee,T0142,Active,Insurance
+Michael D. Wright,T0143,Inactive,Hospitality
+Abigail Garcia,T0144,Inactive,Finance
+Mohamed Wilson,T0145,Active,Technology
+Joseph Miller,T0146,Active,Education
+James Smith,T0147,Active,Technology
+Lucas Lee,T0148,Active,Telecom
+Liam B. Martin,T0149,Active,Technology
+Emma Gonzalez,T0150,Active,Healthcare
+Isabella Taylor,T0151,Inactive,Retail
+Ana Davis,T0152,Inactive,Finance
+Noah Davis,T0153,Active,Hospitality
+Lucas-Mason Young,T0154,Inactive,Insurance
+Abigail N. Young,T0155,Inactive,Insurance
+Liam Smith,T0156,Inactive,Retail
+Maria O. Gonzalez,T0157,Active,Technology
+Chris Jones,T0158,Inactive,Finance
+Ana Jones,T0159,Active,Logistics
+Sophia Anderson,T0160,Inactive,Finance
+Evelyn-Aryan Martinez,T0161,Active,Retail
+Chris Martin,T0162,Active,Hospitality
+Aisha O. Martin,T0163,Inactive,Finance
+Abigail Williams,T0164,Active,Finance
+Maria Garcia,T0165,Inactive,Hospitality
+James-Olivia Wright,T0166,Active,Telecom
+Michael Hernandez,T0167,Inactive,Insurance
+Daniel N. Taylor,T0168,Inactive,Technology
+Lucas S. Martin,T0169,Inactive,Technology
+Daniel White,T0170,Active,Hospitality
+Maria Lopez,T0171,Active,Manufacturing
+David-Amelia Gonzalez,T0172,Active,Technology
+Li-James Clark,T0173,Active,Retail
+Joseph Thompson,T0174,Active,Retail
+Isabella White,T0175,Active,Retail
+Isabella-Aryan Davis,T0176,Active,Logistics
+Mohamed Thomas,T0177,Inactive,Hospitality
+Mohamed Martin,T0178,Inactive,Technology
+Pat Moore,T0179,Active,Manufacturing
+John Rodriguez,T0180,Inactive,Technology
+Olivia Hernandez,T0181,Inactive,Finance
+Isabella Jackson,T0182,Active,Technology
+Emma Young,T0183,Active,Logistics
+Daniel Johnson,T0184,Active,Telecom
+Mia Williams,T0185,Active,Retail
+Ana-David Lee,T0186,Inactive,Retail
+Michael Gonzalez,T0187,Active,Healthcare
+Aisha V. Thomas,T0188,Active,Technology
+Sophia Young,T0189,Inactive,Insurance
+Harper F. Brown,T0190,Active,Insurance
+Liam Lopez,T0191,Inactive,Logistics
+Amelia Jackson,T0192,Inactive,Telecom
+Chris Z. Hall,T0193,Inactive,Insurance
+Daniel X. Anderson,T0194,Active,Hospitality
+Isabella L. Williams,T0195,Active,Logistics
+Aisha Taylor,T0196,Inactive,Hospitality
+Noah Hernandez,T0197,Inactive,Healthcare
+Sophia Lewis,T0198,Active,Manufacturing
+Emma Martinez,T0199,Active,Technology
+Joseph O. Allen,T0200,Active,Retail
+Mason-Mason Thomas,T0201,Inactive,Telecom
+Aisha T. Jackson,T0202,Inactive,Technology
+Pat E. Wilson,T0203,Active,Hospitality
+Evelyn Lopez,T0204,Inactive,Insurance
+Aaryan Lee,T0205,Active,Insurance
+Isabella V. Thompson,T0206,Inactive,Logistics
+Olivia O. Thompson,T0207,Inactive,Education
+Ella Anderson,T0208,Active,Retail
+Mohamed-Ana Williams,T0209,Inactive,Logistics
+Emma S. Jones,T0210,Inactive,Technology
+Aisha Young,T0211,Inactive,Telecom
+Isabella Lee,T0212,Active,Insurance
+Amelia W. Hernandez,T0213,Active,Education
+Michael X. Lewis,T0214,Inactive,Education
+Isabella A. Martin,T0215,Active,Logistics
+Mohamed-Li Thompson,T0216,Active,Telecom
+Isabella-Pat Taylor,T0217,Inactive,Logistics
+David X. Thomas,T0218,Active,Manufacturing
+Aisha Martinez,T0219,Inactive,Hospitality
+Evelyn Smith,T0220,Inactive,Insurance
+Lucas Williams,T0221,Active,Manufacturing
+John Smith,T0222,Inactive,Telecom
+Emma Martin,T0223,Active,Technology
+Amelia Brown,T0224,Inactive,Insurance
+Liam P. Taylor,T0225,Active,Healthcare
+Noah Miller,T0226,Active,Retail
+Isabella I. Martinez,T0227,Inactive,Telecom
+Isabella Lopez,T0228,Active,Telecom
+John Allen,T0229,Inactive,Finance
+Aryan D. Clark,T0230,Active,Finance
+Michael Johnson,T0231,Inactive,Finance
+Chris Wilson,T0232,Active,Insurance
+Li S. Jackson,T0233,Inactive,Telecom
+Aisha Jones,T0234,Inactive,Logistics
+Amelia Miller,T0235,Inactive,Insurance
+Maria-Aaryan Young,T0236,Active,Insurance
+Olivia Lee,T0237,Active,Logistics
+Amelia Clark,T0238,Active,Hospitality
+Aryan Taylor,T0239,Active,Finance
+Harper-Liam Thomas,T0240,Inactive,Logistics
+Lucas Johnson,T0241,Inactive,Telecom
+Pat B. Hernandez,T0242,Inactive,Healthcare
+Daniel A. Clark,T0243,Inactive,Technology
+Emma King,T0244,Inactive,Retail
+Aryan Hernandez,T0245,Inactive,Telecom
+Lucas Garcia,T0246,Inactive,Education
+Maria Gonzalez,T0247,Inactive,Telecom
+Daniel-Aisha Wright,T0248,Inactive,Insurance
+Harper W. Davis,T0249,Inactive,Manufacturing
+Liam Rodriguez,T0250,Active,Hospitality
+Chris-Amelia Lewis,T0251,Inactive,Manufacturing
+James Brown,T0252,Inactive,Healthcare
+Isabella Garcia,T0253,Inactive,Insurance
+Isabella-Emma Thompson,T0254,Inactive,Logistics
+Li-Mason Lewis,T0255,Active,Insurance
+Aryan Young,T0256,Active,Retail
+John Lopez,T0257,Inactive,Finance
+James L. Lee,T0258,Inactive,Finance
+Aisha-Joseph Wilson,T0259,Inactive,Healthcare
+Harper Jones,T0260,Active,Logistics
+Sara Moore,T0261,Active,Finance
+Harper Gonzalez,T0262,Inactive,Technology
+Aisha Allen,T0263,Inactive,Hospitality
+Daniel Thompson,T0264,Inactive,Finance
+Mason Williams,T0265,Inactive,Telecom
+Sophia Miller,T0266,Inactive,Education
+Li Rodriguez,T0267,Inactive,Telecom
+Harper Young,T0268,Active,Hospitality
+Harper E. Allen,T0269,Active,Manufacturing
+Aaryan Garcia,T0270,Inactive,Manufacturing
+Aisha Clark,T0271,Active,Logistics
+Noah Martin,T0272,Active,Finance
+Olivia B. Allen,T0273,Inactive,Retail
+Sara-Lucas Anderson,T0274,Inactive,Healthcare
+Aaryan King,T0275,Active,Education
+Olivia Young,T0276,Active,Technology
+Mason Martinez,T0277,Inactive,Education
+Olivia Wilson,T0278,Inactive,Retail
+Daniel Rodriguez,T0279,Active,Telecom
+James W. Thomas,T0280,Inactive,Hospitality
+Maria Miller,T0281,Active,Retail
+Mia Johnson,T0282,Active,Finance
+Li U. Thomas,T0283,Inactive,Hospitality
+Joseph O. Thompson,T0284,Active,Insurance
+Evelyn-Aryan Smith,T0285,Active,Manufacturing
+Isabella Jones,T0286,Inactive,Technology
+Amelia J. Moore,T0287,Inactive,Technology
+Liam Lewis,T0288,Active,Insurance
+David G. Thompson,T0289,Inactive,Telecom
+Mohamed Hernandez,T0290,Active,Finance
+Olivia-Daniel Martinez,T0291,Inactive,Education
+Sara Rodriguez,T0292,Inactive,Logistics
+Chris Garcia,T0293,Inactive,Insurance
+Emma Smith,T0294,Inactive,Manufacturing
+Abigail Smith,T0295,Inactive,Insurance
+Amelia L. Lee,T0296,Active,Manufacturing
+Ana Lee,T0297,Inactive,Hospitality
+David Hernandez,T0298,Inactive,Hospitality
+Li Smith,T0299,Inactive,Technology
+Mohamed M. White,T0300,Active,Logistics
+Michael Wright,T0301,Inactive,Healthcare
+Amelia Gonzalez,T0302,Active,Hospitality
+Sara W. Smith,T0303,Inactive,Technology
+Sophia Smith,T0304,Active,Hospitality
+Maria E. Thomas,T0305,Inactive,Manufacturing
+Mason Anderson,T0306,Active,Hospitality
+Sara U. White,T0307,Inactive,Retail
+Mason Rodriguez,T0308,Active,Healthcare
+Aaryan Hall,T0309,Inactive,Insurance
+David N. Martin,T0310,Active,Hospitality
+Olivia Gonzalez,T0311,Inactive,Retail
+Pat Lewis,T0312,Active,Technology
+Chris Brown,T0313,Inactive,Logistics
+Liam-Mia Young,T0314,Active,Manufacturing
+Lucas Miller,T0315,Active,Telecom
+Harper W. Hall,T0316,Inactive,Telecom
+Ella G. Allen,T0317,Inactive,Retail
+Evelyn Jones,T0318,Inactive,Insurance
+John Garcia,T0319,Inactive,Education
+Li Allen,T0320,Active,Insurance
+Li M. Davis,T0321,Active,Retail
+Pat-Mohamed Taylor,T0322,Active,Logistics
+Joseph Z. Martin,T0323,Inactive,Finance
+Amelia Allen,T0324,Inactive,Healthcare
+Evelyn-Joseph Clark,T0325,Inactive,Telecom
+Sophia Martinez,T0326,Active,Insurance
+Aryan Davis,T0327,Inactive,Technology
+Evelyn Lee,T0328,Inactive,Education
+Isabella Young,T0329,Active,Manufacturing
+Mohamed O. Miller,T0330,Inactive,Healthcare
+Michael-Lucas Williams,T0331,Inactive,Hospitality
+Li Taylor,T0332,Active,Finance
+Maria Lewis,T0333,Inactive,Technology
+Aryan Garcia,T0334,Inactive,Finance
+Olivia U. Moore,T0335,Active,Healthcare
+Aisha Brown,T0336,Active,Technology
+David Lopez,T0337,Inactive,Finance
+Aisha-Sophia Williams,T0338,Active,Manufacturing
+James Anderson,T0339,Active,Logistics
+Evelyn Garcia,T0340,Inactive,Education
+Noah Thompson,T0341,Inactive,Hospitality
+Noah Williams,T0342,Active,Logistics
+Isabella L. Martin,T0343,Active,Insurance
+Pat Rodriguez,T0344,Inactive,Technology
+Emma W. Lee,T0345,Active,Education
+Noah Martinez,T0346,Active,Insurance
+Aisha White,T0347,Inactive,Manufacturing
+Daniel Anderson,T0348,Inactive,Finance
+Harper Moore,T0349,Inactive,Telecom
+James V. Brown,T0350,Inactive,Healthcare
+Joseph Garcia,T0351,Inactive,Technology
+Maria Thomas,T0352,Active,Finance
+Abigail Moore,T0353,Inactive,Finance
+James Jackson,T0354,Active,Hospitality
+Emma G. Taylor,T0355,Active,Healthcare
+Mia Taylor,T0356,Inactive,Manufacturing
+Joseph Lopez,T0357,Active,Hospitality
+James Clark,T0358,Active,Finance
+Ella Young,T0359,Active,Hospitality
+Mohamed Brown,T0360,Active,Manufacturing
+Mia Lee,T0361,Inactive,Retail
+David Jones,T0362,Active,Technology
+Maria Rodriguez,T0363,Active,Retail
+Mason Hall,T0364,Inactive,Retail
+Aryan-Harper Smith,T0365,Active,Healthcare
+Michael B. Allen,T0366,Active,Healthcare
+John I. Thompson,T0367,Inactive,Manufacturing
+Noah Lee,T0368,Inactive,Healthcare
+James Allen,T0369,Active,Technology
+Abigail F. Martin,T0370,Active,Retail
+Liam W. Gonzalez,T0371,Inactive,Telecom
+Mason Taylor,T0372,Active,Finance
+Mia Young,T0373,Inactive,Insurance
+Abigail-Ana Gonzalez,T0374,Inactive,Telecom
+Mohamed White,T0375,Active,Insurance
+Daniel Lee,T0376,Active,Hospitality
+Evelyn Martinez,T0377,Active,Telecom
+Ana Martinez,T0378,Inactive,Insurance
+Pat Jones,T0379,Active,Healthcare
+Maria N. Jackson,T0380,Inactive,Logistics
+Sara Taylor,T0381,Inactive,Finance
+Liam U. Rodriguez,T0382,Inactive,Insurance
+James King,T0383,Active,Finance
+Joseph Martinez,T0384,Inactive,Hospitality
+Aryan Wilson,T0385,Active,Finance
+Mohamed-Aisha Martin,T0386,Active,Technology
+Sara J. Lee,T0387,Inactive,Logistics
+Evelyn M. Garcia,T0388,Inactive,Insurance
+Li Thomas,T0389,Inactive,Finance
+Pat Clark,T0390,Active,Telecom
+Li Martinez,T0391,Active,Logistics
+Mason Wright,T0392,Inactive,Manufacturing
+Liam Anderson,T0393,Inactive,Education
+Isabella K. Lee,T0394,Inactive,Logistics
+Maria Hernandez,T0395,Inactive,Finance
+David Davis,T0396,Inactive,Logistics
+Mohamed Moore,T0397,Inactive,Technology
+Joseph White,T0398,Inactive,Retail
+Lucas Y. Gonzalez,T0399,Inactive,Finance
+Mia King,T0400,Active,Finance
+Harper P. Garcia,T0401,Active,Logistics
+Pat Johnson,T0402,Active,Education
+Daniel Garcia,T0403,Active,Telecom
+Michael Moore,T0404,Active,Hospitality
+Joseph Taylor,T0405,Inactive,Finance
+James Lewis,T0406,Inactive,Education
+Amelia Lee,T0407,Inactive,Healthcare
+Daniel Wright,T0408,Inactive,Hospitality
+David Z. Anderson,T0409,Inactive,Education
+Ella Johnson,T0410,Active,Hospitality
+Ella Wilson,T0411,Active,Retail
+Lucas V. Jackson,T0412,Inactive,Manufacturing
+Evelyn Thomas,T0413,Active,Education
+Emma Lewis,T0414,Inactive,Finance
+Aaryan Wright,T0415,Inactive,Hospitality
+Pat Williams,T0416,Active,Logistics
+Maria Davis,T0417,Active,Hospitality
+Lucas Hall,T0418,Inactive,Healthcare
+Evelyn Allen,T0419,Active,Technology
+Mia Thompson,T0420,Inactive,Education
+Emma White,T0421,Inactive,Healthcare
+Chris Taylor,T0422,Active,Retail
+Chris Moore,T0423,Inactive,Finance
+James Miller,T0424,Active,Healthcare
+Daniel Thomas,T0425,Active,Telecom
+Olivia White,T0426,Active,Logistics
+Daniel Williams,T0427,Inactive,Insurance
+Isabella Moore,T0428,Inactive,Retail
+David E. White,T0429,Inactive,Technology
+Michael F. Lee,T0430,Inactive,Hospitality
+Olivia Jackson,T0431,Active,Healthcare
+Isabella Allen,T0432,Active,Retail
+Liam S. Johnson,T0433,Active,Finance
+Harper Allen,T0434,Inactive,Insurance
+John Martin,T0435,Inactive,Insurance
+Abigail Brown,T0436,Inactive,Logistics
+Emma Rodriguez,T0437,Inactive,Manufacturing
+Ella Wright,T0438,Active,Education
+Ella Moore,T0439,Inactive,Finance
+Joseph-Ana Young,T0440,Inactive,Hospitality
+Lucas Allen,T0441,Inactive,Telecom
+Noah King,T0442,Inactive,Healthcare
+Maria Jackson,T0443,Active,Logistics
+Aaryan Miller,T0444,Active,Healthcare
+Daniel H. Martinez,T0445,Active,Technology
+Joseph W. Lee,T0446,Active,Retail
+Harper M. Lee,T0447,Inactive,Technology
+Sophia Garcia,T0448,Inactive,Finance
+Liam R. Brown,T0449,Active,Insurance
+Mason Lewis,T0450,Inactive,Retail
+Daniel Jones,T0451,Active,Logistics
+Sara Brown,T0452,Active,Telecom
+Liam Davis,T0453,Inactive,Finance
+Amelia Anderson,T0454,Inactive,Healthcare
+Mohamed Lopez,T0455,Inactive,Healthcare
+Michael Lewis,T0456,Inactive,Finance
+Chris Lewis,T0457,Inactive,Hospitality
+Ella-Noah Lee,T0458,Inactive,Hospitality
+Daniel S. Miller,T0459,Inactive,Logistics
+Isabella Brown,T0460,Inactive,Finance
+Lucas-Isabella Johnson,T0461,Inactive,Healthcare
+Aisha Hall,T0462,Inactive,Retail
+Mason D. Lewis,T0463,Inactive,Education
+Li F. Brown,T0464,Active,Logistics
+Olivia-Pat Miller,T0465,Active,Manufacturing
+Maria Brown,T0466,Inactive,Hospitality
+Amelia Martin,T0467,Inactive,Telecom
+Li C. Brown,T0468,Active,Logistics
+Chris Martinez,T0469,Inactive,Education
+Harper Q. Jones,T0470,Active,Education
+Harper Clark,T0471,Active,Finance
+Aryan L. Wilson,T0472,Active,Telecom
+Emma Thomas,T0473,Active,Education
+Sara Wilson,T0474,Inactive,Retail
+Aisha Miller,T0475,Active,Finance
+Liam Jackson,T0476,Active,Technology
+Aryan Williams,T0477,Active,Retail
+Daniel O. Young,T0478,Active,Finance
+Noah Brown,T0479,Active,Insurance
+Joseph-Noah Clark,T0480,Inactive,Hospitality
+Mia Lewis,T0481,Inactive,Hospitality
+Sophia-Mohamed Gonzalez,T0482,Inactive,Education
+Mason-Mohamed Williams,T0483,Active,Insurance
+Harper N. Johnson,T0484,Active,Insurance
+Li Wright,T0485,Inactive,Technology
+Amelia Martinez,T0486,Inactive,Hospitality
+Mason H. Jackson,T0487,Active,Education
+Pat Garcia,T0488,Active,Technology
+Isabella X. Lopez,T0489,Inactive,Insurance
+Aaryan Jones,T0490,Active,Healthcare
+David Taylor,T0491,Inactive,Technology
+Aaryan H. Lee,T0492,Active,Finance
+Mia Moore,T0493,Inactive,Insurance
+James Williams,T0494,Active,Insurance
+Amelia Hernandez,T0495,Active,Education
+Olivia Martinez,T0496,Inactive,Telecom
+Sara Johnson,T0497,Active,Healthcare
+Liam Young,T0498,Inactive,Finance
+Ana Gonzalez,T0499,Inactive,Finance
+Abigail C. Rodriguez,T0500,Active,Healthcare
+Liam Wright,T0501,Active,Insurance
+Chris-Sophia Smith,T0502,Inactive,Telecom
+Maria Jones,T0503,Active,Education
+Olivia Hall,T0504,Inactive,Technology
+Mason Davis,T0505,Inactive,Logistics
+Mason Martin,T0506,Inactive,Hospitality
+Sophia Thomas,T0507,Active,Education
+Abigail O. Jackson,T0508,Active,Education
+Abigail Taylor,T0509,Active,Telecom
+Aisha Martin,T0510,Inactive,Technology
+Ana O. Jones,T0511,Inactive,Hospitality
+Emma Garcia,T0512,Active,Education
+Harper C. Lopez,T0513,Active,Hospitality
+Aisha Thomas,T0514,Active,Education
+Noah-Harper Thompson,T0515,Inactive,Logistics
+John King,T0516,Active,Hospitality
+Mia Y. Clark,T0517,Active,Technology
+David Hall,T0518,Inactive,Education
+Mason Hernandez,T0519,Active,Telecom
+Mason N. Clark,T0520,Active,Logistics
+Aisha Thompson,T0521,Inactive,Healthcare
+Mia W. Jackson,T0522,Inactive,Technology
+Abigail J. Hall,T0523,Active,Manufacturing
+Pat Lopez,T0524,Inactive,Insurance
+Aryan Q. Garcia,T0525,Active,Manufacturing
+Aaryan-Maria Hernandez,T0526,Active,Retail
+Ana P. Thomas,T0527,Active,Technology
+Amelia Taylor,T0528,Active,Telecom
+Evelyn Young,T0529,Active,Education
+Liam Hernandez,T0530,Active,Hospitality
+Ella I. White,T0531,Inactive,Retail
+Mia-Li Smith,T0532,Active,Retail
+Evelyn King,T0533,Active,Insurance
+Sophia Williams,T0534,Active,Logistics
+Mason Miller,T0535,Inactive,Manufacturing
+Aaryan Lopez,T0536,Inactive,Hospitality
+David Thompson,T0537,Inactive,Insurance
+Lucas P. Thompson,T0538,Active,Telecom
+Aisha Wilson,T0539,Active,Technology
+Ella Thompson,T0540,Inactive,Manufacturing
+Daniel Brown,T0541,Inactive,Hospitality
+Michael Jackson,T0542,Inactive,Insurance
+Mia Rodriguez,T0543,Inactive,Logistics
+Liam G. Lee,T0544,Inactive,Retail
+Chris-Aryan Gonzalez,T0545,Active,Hospitality
+David Rodriguez,T0546,Active,Technology
+Harper Wilson,T0547,Active,Insurance
+Sophia Martin,T0548,Inactive,Telecom
+David Martin,T0549,Active,Telecom
+Isabella-Aaryan Lee,T0550,Active,Technology
+Maria-Daniel Lee,T0551,Active,Retail
+Amelia Thomas,T0552,Inactive,Insurance
+Aryan Thomas,T0553,Active,Logistics
+Harper Wright,T0554,Active,Manufacturing
+Mason Thompson,T0555,Inactive,Education
+David D. Thomas,T0556,Active,Logistics
+Harper N. Miller,T0557,Active,Logistics
+Joseph-David White,T0558,Inactive,Manufacturing
+Abigail Hall,T0559,Inactive,Finance
+Aryan H. Wilson,T0560,Inactive,Manufacturing
+Liam-Maria Jackson,T0561,Active,Education
+Sophia Davis,T0562,Active,Education
+Michael F. Jones,T0563,Active,Retail
+Evelyn Williams,T0564,Active,Technology
+Evelyn Moore,T0565,Inactive,Retail
+Aaryan Clark,T0566,Inactive,Insurance
+Michael-Amelia Thomas,T0567,Active,Finance
+Harper S. Thompson,T0568,Active,Technology
+Liam L. Smith,T0569,Active,Retail
+James Garcia,T0570,Inactive,Finance
+Aryan Lewis,T0571,Inactive,Manufacturing
+Li Gonzalez,T0572,Inactive,Finance
+Noah-Abigail Martinez,T0573,Active,Manufacturing
+Noah Thomas,T0574,Inactive,Hospitality
+Ana Miller,T0575,Inactive,Finance
+Li Lopez,T0576,Active,Insurance
+Li Clark,T0577,Active,Telecom
+Mia-Lucas King,T0578,Active,Retail
+Lucas-James Rodriguez,T0579,Inactive,Logistics
+Lucas Clark,T0580,Active,Hospitality
+James-Pat Rodriguez,T0581,Inactive,Manufacturing
+Ella White,T0582,Inactive,Retail
+Mohamed T. King,T0583,Active,Telecom
+Lucas E. Thomas,T0584,Inactive,Finance
+Michael Garcia,T0585,Active,Logistics
+Chris X. Lewis,T0586,Inactive,Healthcare
+David U. White,T0587,Inactive,Education
+Amelia O. Jackson,T0588,Inactive,Healthcare
+Chris X. Clark,T0589,Inactive,Finance
+Aryan-Daniel Clark,T0590,Inactive,Manufacturing
+Li N. Rodriguez,T0591,Active,Hospitality
+Liam N. Young,T0592,Inactive,Retail
+Aisha G. Garcia,T0593,Active,Education
+Pat King,T0594,Inactive,Retail
+Ana-Mia Thomas,T0595,Inactive,Insurance
+Daniel King,T0596,Active,Retail
+Ella N. Davis,T0597,Active,Insurance
+Olivia Clark,T0598,Active,Technology
+Sara Thompson,T0599,Active,Healthcare
+Joseph Young,T0600,Active,Healthcare
+Abigail T. Anderson,T0601,Inactive,Technology
+Mohamed Anderson,T0602,Inactive,Telecom
+Ella Lee,T0603,Inactive,Technology
+Mason Lopez,T0604,Active,Manufacturing
+Pat Thomas,T0605,Inactive,Education
+Evelyn Gonzalez,T0606,Active,Education
+James Young,T0607,Inactive,Finance
+Sara White,T0608,Inactive,Logistics
+Noah Garcia,T0609,Inactive,Insurance
+Mason-Li King,T0610,Inactive,Education
+Isabella Clark,T0611,Active,Insurance
+Harper King,T0612,Inactive,Education
+Aaryan F. Moore,T0613,Inactive,Finance
+Daniel Moore,T0614,Inactive,Finance
+Mason Jackson,T0615,Inactive,Hospitality
+Li White,T0616,Active,Telecom
+Ana I. Taylor,T0617,Inactive,Education
+Daniel Allen,T0618,Active,Finance
+Mia Davis,T0619,Inactive,Technology
+Mia Wilson,T0620,Inactive,Insurance
+Sara Young,T0621,Inactive,Retail
+James-Li Hernandez,T0622,Inactive,Education
+Aaryan Jackson,T0623,Inactive,Healthcare
+Liam Clark,T0624,Inactive,Hospitality
+Sophia Clark,T0625,Inactive,Technology
+Mohamed Taylor,T0626,Active,Finance
+Maria Allen,T0627,Inactive,Education
+John Lee,T0628,Active,Healthcare
+Olivia Johnson,T0629,Active,Hospitality
+Sara V. White,T0630,Inactive,Healthcare
+Li Hall,T0631,Active,Finance
+Ella Clark,T0632,Active,Education
+Mason Garcia,T0633,Inactive,Logistics
+James Moore,T0634,Active,Hospitality
+Ella Gonzalez,T0635,Active,Insurance
+Mason P. Lewis,T0636,Inactive,Education
+Mia Allen,T0637,Inactive,Finance
+Olivia Miller,T0638,Active,Telecom
+Li Young,T0639,Inactive,Logistics
+Sara Lee,T0640,Inactive,Technology
+Chris-Evelyn Clark,T0641,Active,Finance
+Olivia Allen,T0642,Active,Retail
+Harper-Li King,T0643,Inactive,Telecom
+Olivia Anderson,T0644,Inactive,Telecom
+Michael Martin,T0645,Active,Technology
+Evelyn L. Hernandez,T0646,Inactive,Insurance
+Abigail Rodriguez,T0647,Active,Hospitality
+Isabella V. Anderson,T0648,Inactive,Insurance
+Joseph Hall,T0649,Active,Finance
+Liam King,T0650,Active,Finance
+Olivia N. Young,T0651,Inactive,Retail
+Sophia Johnson,T0652,Inactive,Finance
+Daniel Smith,T0653,Inactive,Education
+David Williams,T0654,Active,Telecom
+Abigail Jackson,T0655,Inactive,Technology
+Ana Anderson,T0656,Active,Retail
+Liam Martinez,T0657,Inactive,Telecom
+James Hall,T0658,Active,Finance
+Liam Williams,T0659,Active,Retail
+Noah Johnson,T0660,Active,Insurance
+Mia D. Gonzalez,T0661,Active,Education
+Maria-Liam Hernandez,T0662,Inactive,Insurance
+Aryan-Li Taylor,T0663,Active,Hospitality
+John Wright,T0664,Active,Finance
+Mia Lopez,T0665,Inactive,Logistics
+Mohamed Jackson,T0666,Inactive,Telecom
+Ana J. Williams,T0667,Inactive,Logistics
+Maria Smith,T0668,Active,Retail
+Mohamed-Daniel Rodriguez,T0669,Inactive,Finance
+Mia Jones,T0670,Inactive,Insurance
+Abigail Young,T0671,Inactive,Retail
+Liam White,T0672,Active,Retail
+Sara Wright,T0673,Inactive,Telecom
+Mia Martin,T0674,Active,Finance
+Michael-Michael Gonzalez,T0675,Active,Technology
+Ana Taylor,T0676,Active,Retail
+Daniel Miller,T0677,Inactive,Manufacturing
+Harper Lee,T0678,Inactive,Telecom
+Michael Davis,T0679,Inactive,Finance
+Michael Clark,T0680,Inactive,Manufacturing
+Ana Thomas,T0681,Inactive,Retail
+Ella Z. Jones,T0682,Inactive,Hospitality
+Chris Johnson,T0683,Active,Telecom
+John Davis,T0684,Active,Hospitality
+Mia Martinez,T0685,Active,Retail
+Noah Moore,T0686,Inactive,Hospitality
+Michael Young,T0687,Active,Healthcare
+Aaryan Gonzalez,T0688,Active,Healthcare
+Ana Williams,T0689,Inactive,Manufacturing
+Mia Wright,T0690,Inactive,Hospitality
+Aisha Wright,T0691,Active,Insurance
+David S. Johnson,T0692,Inactive,Technology
+Aaryan Taylor,T0693,Inactive,Manufacturing
+Aryan Clark,T0694,Inactive,Technology
+Mohamed Clark,T0695,Inactive,Finance
+Emma-Ana Martin,T0696,Active,Retail
+Lucas I. Brown,T0697,Inactive,Logistics
+Noah Allen,T0698,Inactive,Insurance
+Noah K. Rodriguez,T0699,Active,Education
+Isabella Smith,T0700,Active,Education
+Harper Brown,T0701,Inactive,Education
+Amelia Garcia,T0702,Inactive,Retail
+Ana V. Wright,T0703,Inactive,Telecom
+Sophia Lopez,T0704,Active,Education
+Daniel M. Moore,T0705,Active,Insurance
+Michael Thomas,T0706,Active,Technology
+Abigail Z. King,T0707,Inactive,Manufacturing
+Michael Thompson,T0708,Active,Finance
+Sophia C. White,T0709,Active,Technology
+Mason Allen,T0710,Inactive,Hospitality
+Mia Smith,T0711,Inactive,Manufacturing
+Lucas Jones,T0712,Active,Education
+Mia Clark,T0713,Inactive,Manufacturing
+Pat Lee,T0714,Active,Insurance
+Aisha Johnson,T0715,Inactive,Insurance
+Aaryan-Michael Jones,T0716,Inactive,Insurance
+Emma Jackson,T0717,Active,Finance
+Olivia-Sara Gonzalez,T0718,Inactive,Telecom
+Aryan S. Johnson,T0719,Inactive,Manufacturing
+Aaryan A. Hall,T0720,Active,Hospitality
+Mohamed Allen,T0721,Inactive,Healthcare
+Pat White,T0722,Active,Technology
+Daniel Martinez,T0723,Inactive,Hospitality
+Chris Williams,T0724,Inactive,Technology
+Emma Lee,T0725,Active,Finance
+Ana D. Wilson,T0726,Inactive,Retail
+David-Chris Martin,T0727,Inactive,Education
+Sophia-Joseph Johnson,T0728,Inactive,Education
+Amelia Lopez,T0729,Active,Logistics
+Isabella Gonzalez,T0730,Active,Hospitality
+Noah Young,T0731,Active,Education
+Liam-Aaryan Wright,T0732,Inactive,Finance
+Liam J. Wilson,T0733,Inactive,Telecom
+Liam Garcia,T0734,Inactive,Telecom
+Pat M. Taylor,T0735,Inactive,Hospitality
+Amelia Williams,T0736,Active,Retail
+Aryan Jackson,T0737,Active,Logistics
+Liam-Daniel Hernandez,T0738,Inactive,Education
+Ana Clark,T0739,Inactive,Retail
+Ella-Chris Smith,T0740,Active,Hospitality
+Chris-Aisha Hernandez,T0741,Inactive,Telecom
+Emma Wilson,T0742,Active,Healthcare
+Harper Davis,T0743,Active,Retail
+Aaryan Johnson,T0744,Inactive,Insurance
+Lucas A. Wright,T0745,Inactive,Retail
+Sara-Daniel Anderson,T0746,Active,Education
+Ella Smith,T0747,Inactive,Retail
+John Lewis,T0748,Inactive,Hospitality
+Abigail N. Martin,T0749,Inactive,Hospitality
+Ana-Joseph Rodriguez,T0750,Inactive,Telecom
+Olivia Wright,T0751,Inactive,Hospitality
+Ana J. Allen,T0752,Inactive,Insurance
+Aisha X. Moore,T0753,Active,Education
+Aryan O. Clark,T0754,Inactive,Finance
+Layla Fleming Z,T0755,Active,Hospitality
+Grace Porter U,T0756,Active,Healthcare
+Grace Murray Q,T0757,Inactive,Retail
+Sofia Brooks S,T0758,Active,Manufacturing
+Ethan Hayes K,T0759,Inactive,Retail
+Layla Dean N,T0760,Inactive,Healthcare
+Elijah Conrad G,T0761,Inactive,Insurance
+Leo Sutton K,T0762,Active,Insurance
+Nora Carter R,T0763,Inactive,Technology
+Grace Dean H,T0764,Inactive,Telecom
+Chloe Myers J,T0765,Inactive,Manufacturing
+Grace Carter P,T0766,Inactive,Telecom
+Henry Fleming D,T0767,Inactive,Logistics
+Luna Foster J,T0768,Active,Technology
+Benjamin Bishop O,T0769,Inactive,Insurance
+Logan Dean R,T0770,Inactive,Telecom
+Henry Foster D,T0771,Active,Manufacturing
+Ava Conrad H,T0772,Active,Healthcare
+Charlotte Keller K,T0773,Inactive,Finance
+Elijah Parker R,T0774,Active,Logistics
+Grace Nash U,T0775,Active,Technology
+Wyatt Fleming U,T0776,Active,Finance
+Sofia Pierce X,T0777,Active,Retail
+Layla Murray B,T0778,Inactive,Insurance
+Amelia Fleming B,T0779,Active,Technology
+Charlotte Carter J,T0780,Inactive,Telecom
+Leo Nash E,T0781,Inactive,Technology
+Logan Bailey K,T0782,Active,Insurance
+Henry Murray A,T0783,Inactive,Technology
+Logan Murray T,T0784,Inactive,Logistics
+Leo Carter C,T0785,Inactive,Finance
+Amelia Foster P,T0786,Inactive,Manufacturing
+Ethan Porter M,T0787,Active,Insurance
+Henry Carter J,T0788,Active,Technology
+Luna Myers B,T0789,Active,Insurance
+Chloe Murray M,T0790,Inactive,Finance
+Chloe Bishop T,T0791,Active,Manufacturing
+Elijah Nash E,T0792,Inactive,Hospitality
+Luna Keller W,T0793,Inactive,Telecom
+Logan Myers V,T0794,Active,Telecom
+Jack Conrad W,T0795,Inactive,Finance
+Charlotte Brooks R,T0796,Active,Hospitality
+Nora Foster F,T0797,Inactive,Telecom
+Jack Bailey V,T0798,Active,Hospitality
+Grace Reed Q,T0799,Inactive,Healthcare
+Jack Foster Q,T0800,Inactive,Insurance
+Ava Pierce O,T0801,Inactive,Healthcare
+Owen Porter A,T0802,Active,Hospitality
+Benjamin Brooks N,T0803,Inactive,Finance
+Nora Brooks C,T0804,Inactive,Healthcare
+Chloe Keller F,T0805,Active,Logistics
+Luna Sutton O,T0806,Inactive,Logistics
+Benjamin Pierce E,T0807,Inactive,Finance
+Amelia Pierce M,T0808,Active,Manufacturing
+Ethan Parker J,T0809,Inactive,Telecom
+Layla Pierce M,T0810,Active,Manufacturing
+Jack Bishop E,T0811,Inactive,Manufacturing
+Charlotte Brooks Z,T0812,Inactive,Hospitality
+Ethan Myers G,T0813,Active,Finance
+Ava Hayes T,T0814,Active,Manufacturing
+Ava Sutton O,T0815,Active,Telecom
+Logan Brooks E,T0816,Inactive,Manufacturing
+Wyatt Carter H,T0817,Inactive,Retail
+Leo Myers N,T0818,Inactive,Technology
+Ava Pierce S,T0819,Active,Logistics
+Nora Nash B,T0820,Inactive,Logistics
+Leo Carter W,T0821,Inactive,Logistics
+Elijah Fleming M,T0822,Active,Telecom
+Grace Myers H,T0823,Inactive,Retail
+Jack Brooks R,T0824,Inactive,Logistics
+Nora Conrad E,T0825,Inactive,Manufacturing
+Henry Dean K,T0826,Active,Insurance
+Luna Reed R,T0827,Active,Healthcare
+Henry Sutton V,T0828,Active,Finance
+Logan Pierce G,T0829,Inactive,Manufacturing
+Wyatt Fleming A,T0830,Active,Manufacturing
+Charlotte Nash H,T0831,Active,Logistics
+Sofia Pierce K,T0832,Inactive,Logistics
+Jack Pierce U,T0833,Inactive,Technology
+Henry Bishop Q,T0834,Inactive,Insurance
+Charlotte Nash Y,T0835,Inactive,Manufacturing
+Luna Carter N,T0836,Active,Hospitality
+Sofia Foster A,T0837,Inactive,Telecom
+Layla Fleming E,T0838,Active,Education
+Sofia Sutton S,T0839,Active,Insurance
+Nora Carter I,T0840,Inactive,Insurance
+Jack Murray X,T0841,Inactive,Retail
+Elijah Pierce P,T0842,Active,Telecom
+Ava Conrad B,T0843,Active,Healthcare
+Ethan Keller E,T0844,Active,Finance
+Elijah Parker G,T0845,Inactive,Education
+Ava Nash V,T0846,Inactive,Healthcare
+Ethan Pierce R,T0847,Inactive,Healthcare
+Ethan Conrad X,T0848,Inactive,Telecom
+Chloe Parker Q,T0849,Inactive,Retail
+Charlotte Bailey Q,T0850,Active,Manufacturing
+Logan Conrad I,T0851,Inactive,Technology
+Owen Reed L,T0852,Inactive,Insurance
+Sofia Myers J,T0853,Active,Healthcare
+Benjamin Sutton M,T0854,Inactive,Telecom
+Grace Brooks U,T0855,Active,Retail
+Benjamin Nash N,T0856,Inactive,Hospitality
+Charlotte Conrad B,T0857,Active,Manufacturing
+Grace Porter B,T0858,Active,Technology
+Nora Brooks F,T0859,Inactive,Healthcare
+Logan Foster Y,T0860,Inactive,Finance
+Chloe Murray S,T0861,Active,Hospitality
+Owen Pierce K,T0862,Inactive,Retail
+Benjamin Conrad X,T0863,Inactive,Healthcare
+Charlotte Keller H,T0864,Active,Education
+Owen Carter A,T0865,Inactive,Insurance
+Grace Myers L,T0866,Inactive,Logistics
+Amelia Sutton C,T0867,Inactive,Manufacturing
+Benjamin Reed I,T0868,Active,Logistics
+Elijah Sutton K,T0869,Inactive,Finance
+Benjamin Parker J,T0870,Inactive,Education
+Henry Bailey E,T0871,Active,Retail
+Layla Hayes R,T0872,Inactive,Finance
+Ethan Reed L,T0873,Active,Hospitality
+Wyatt Sutton A,T0874,Inactive,Logistics
+Owen Reed X,T0875,Active,Hospitality
+Leo Murray V,T0876,Inactive,Retail
+Elijah Porter J,T0877,Inactive,Insurance
+Elijah Reed F,T0878,Inactive,Technology
+Layla Fleming P,T0879,Active,Education
+Henry Myers X,T0880,Inactive,Hospitality
+Logan Hayes D,T0881,Active,Technology
+Ethan Sutton K,T0882,Inactive,Education
+Jack Carter N,T0883,Active,Technology
+Wyatt Dean P,T0884,Inactive,Retail
+Owen Carter J,T0885,Inactive,Hospitality
+Sofia Carter M,T0886,Inactive,Logistics
+Luna Bailey S,T0887,Active,Hospitality
+Nora Murray V,T0888,Active,Insurance
+Logan Hayes Z,T0889,Inactive,Finance
+Layla Nash E,T0890,Inactive,Manufacturing
+Henry Foster W,T0891,Inactive,Logistics
+Benjamin Hayes T,T0892,Inactive,Hospitality
+Owen Pierce Q,T0893,Inactive,Telecom
+Ava Bishop W,T0894,Active,Finance
+Sofia Bishop F,T0895,Active,Hospitality
+Owen Carter Z,T0896,Inactive,Finance
+Ethan Bailey I,T0897,Active,Telecom
+Leo Pierce S,T0898,Active,Insurance
+Leo Foster L,T0899,Active,Insurance
+Charlotte Fleming N,T0900,Active,Finance
+Elijah Bishop J,T0901,Inactive,Insurance
+Logan Conrad P,T0902,Inactive,Insurance
+Charlotte Hayes X,T0903,Inactive,Education
+Benjamin Fleming B,T0904,Active,Healthcare
+Wyatt Bailey V,T0905,Active,Manufacturing
+Leo Murray R,T0906,Active,Education
+Nora Keller O,T0907,Active,Logistics
+Amelia Murray U,T0908,Inactive,Logistics
+Ethan Dean O,T0909,Inactive,Logistics
+Ethan Dean G,T0910,Inactive,Finance
+Charlotte Pierce F,T0911,Inactive,Education
+Henry Nash Q,T0912,Inactive,Hospitality
+Owen Sutton S,T0913,Active,Education
+Luna Hayes T,T0914,Active,Technology
+Benjamin Foster K,T0915,Active,Manufacturing
+Chloe Bailey F,T0916,Inactive,Retail
+Leo Sutton N,T0917,Active,Hospitality
+Owen Keller F,T0918,Inactive,Telecom
+Amelia Pierce F,T0919,Inactive,Technology
+Elijah Murray K,T0920,Inactive,Hospitality
+Ava Bishop A,T0921,Inactive,Retail
+Logan Sutton R,T0922,Inactive,Logistics
+Grace Keller W,T0923,Inactive,Insurance
+Amelia Reed S,T0924,Active,Manufacturing
+Chloe Brooks I,T0925,Active,Telecom
+Chloe Murray Y,T0926,Inactive,Hospitality
+Grace Pierce Q,T0927,Active,Hospitality
+Charlotte Porter Y,T0928,Inactive,Telecom
+Ava Hayes R,T0929,Active,Logistics
+Charlotte Myers J,T0930,Active,Insurance
+Henry Bishop C,T0931,Inactive,Finance
+Sofia Dean Z,T0932,Inactive,Hospitality
+Layla Murray T,T0933,Active,Manufacturing
+Logan Brooks S,T0934,Inactive,Telecom
+Henry Pierce F,T0935,Inactive,Technology
+Chloe Porter Q,T0936,Active,Retail
+Layla Brooks I,T0937,Active,Retail
+Sofia Foster W,T0938,Inactive,Manufacturing
+Owen Nash E,T0939,Inactive,Logistics
+Owen Hayes C,T0940,Active,Logistics
+Leo Porter W,T0941,Inactive,Insurance
+Grace Carter S,T0942,Active,Finance
+Jack Bishop C,T0943,Inactive,Manufacturing
+Layla Dean P,T0944,Inactive,Education
+Chloe Carter R,T0945,Active,Hospitality
+Grace Carter V,T0946,Active,Healthcare
+Charlotte Hayes A,T0947,Active,Retail
+Jack Hayes A,T0948,Inactive,Manufacturing
+Elijah Fleming F,T0949,Inactive,Finance
+Luna Porter C,T0950,Inactive,Retail
+Ava Sutton U,T0951,Inactive,Manufacturing
+Layla Reed W,T0952,Active,Healthcare
+Logan Nash C,T0953,Active,Hospitality
+Sofia Conrad V,T0954,Inactive,Healthcare
+Ethan Carter D,T0955,Inactive,Retail
+Grace Reed H,T0956,Inactive,Finance
+Charlotte Bailey K,T0957,Inactive,Technology
+Elijah Sutton Y,T0958,Active,Retail
+Benjamin Conrad S,T0959,Active,Hospitality
+Amelia Hayes L,T0960,Active,Retail
+Layla Hayes G,T0961,Active,Finance
+Elijah Bailey S,T0962,Inactive,Education
+Layla Carter Z,T0963,Active,Manufacturing
+Henry Reed H,T0964,Inactive,Healthcare
+Chloe Dean Q,T0965,Active,Logistics
+Chloe Brooks Z,T0966,Active,Insurance
+Owen Bailey H,T0967,Inactive,Hospitality
+Benjamin Conrad A,T0968,Inactive,Education
+Elijah Sutton S,T0969,Inactive,Education
+Nora Murray Y,T0970,Inactive,Finance
+Ethan Reed A,T0971,Inactive,Manufacturing
+Ava Brooks Z,T0972,Inactive,Telecom
+Chloe Conrad Y,T0973,Inactive,Logistics
+Owen Reed U,T0974,Active,Technology
+Benjamin Fleming C,T0975,Active,Retail
+Nora Carter M,T0976,Active,Technology
+Layla Myers B,T0977,Active,Finance
+Layla Bailey O,T0978,Active,Technology
+Amelia Bailey A,T0979,Active,Healthcare
+Amelia Nash L,T0980,Inactive,Retail
+Luna Foster X,T0981,Inactive,Finance
+Ethan Carter Z,T0982,Inactive,Technology
+Leo Reed I,T0983,Active,Insurance
+Jack Conrad L,T0984,Active,Insurance
+Amelia Bishop F,T0985,Inactive,Finance
+Charlotte Myers X,T0986,Active,Healthcare
+Ethan Myers B,T0987,Inactive,Education
+Owen Foster F,T0988,Active,Telecom
+Layla Myers K,T0989,Active,Logistics
+Wyatt Porter C,T0990,Inactive,Finance
+Leo Brooks F,T0991,Active,Telecom
+Ava Sutton C,T0992,Inactive,Technology
+Chloe Carter C,T0993,Inactive,Healthcare
+Luna Dean J,T0994,Inactive,Hospitality
+Sofia Hayes L,T0995,Inactive,Manufacturing
+Nora Myers E,T0996,Active,Logistics
+Ethan Myers R,T0997,Inactive,Healthcare
+Wyatt Parker Y,T0998,Inactive,Technology
+Charlotte Dean Q,T0999,Active,Logistics
+Grace Brooks E,T1000,Inactive,Finance
+Ava Myers Q,T1001,Inactive,Education
+Jack Reed S,T1002,Active,Telecom
+Elijah Sutton C,T1003,Active,Logistics
+Elijah Myers J,T1004,Inactive,Education
+Owen Carter K,T1005,Inactive,Technology
+Sofia Reed G,T1006,Active,Hospitality
+Charlotte Foster D,T1007,Active,Insurance
+Charlotte Pierce L,T1008,Active,Insurance
+Chloe Hayes I,T1009,Active,Finance
+Amelia Fleming W,T1010,Active,Manufacturing
+Wyatt Foster C,T1011,Active,Education
+Owen Conrad B,T1012,Inactive,Technology
+Amelia Parker M,T1013,Inactive,Telecom
+Nora Myers D,T1014,Inactive,Finance
+Elijah Bailey A,T1015,Active,Manufacturing
+Elijah Dean M,T1016,Inactive,Finance
+Henry Reed A,T1017,Active,Manufacturing
+Jack Foster C,T1018,Inactive,Finance
+Ava Hayes B,T1019,Active,Hospitality
+Layla Sutton P,T1020,Active,Logistics
+Layla Murray L,T1021,Active,Retail
+Henry Porter O,T1022,Active,Healthcare
+Sofia Fleming P,T1023,Inactive,Telecom
+Grace Brooks C,T1024,Inactive,Logistics
+Elijah Keller G,T1025,Active,Telecom
+Ethan Sutton Z,T1026,Inactive,Insurance
+Nora Nash L,T1027,Inactive,Logistics
+Wyatt Myers A,T1028,Inactive,Healthcare
+Grace Conrad L,T1029,Active,Retail
+Charlotte Myers V,T1030,Active,Technology
+Nora Brooks Y,T1031,Active,Hospitality
+Owen Bishop F,T1032,Active,Manufacturing
+Wyatt Bishop S,T1033,Active,Education
+Elijah Dean Z,T1034,Inactive,Telecom
+Chloe Murray P,T1035,Active,Finance
+Ava Myers T,T1036,Active,Healthcare
+Leo Nash A,T1037,Inactive,Hospitality
+Logan Foster K,T1038,Active,Education
+Ava Parker E,T1039,Active,Finance
+Leo Bishop C,T1040,Inactive,Logistics
+Wyatt Foster F,T1041,Inactive,Insurance
+Wyatt Murray W,T1042,Inactive,Manufacturing
+Amelia Sutton J,T1043,Inactive,Retail
+Amelia Parker W,T1044,Inactive,Hospitality
+Ava Murray T,T1045,Inactive,Hospitality
+Sofia Bailey P,T1046,Active,Education
+Benjamin Myers L,T1047,Inactive,Retail
+Benjamin Carter O,T1048,Active,Technology
+Logan Myers W,T1049,Active,Education
+Henry Bailey X,T1050,Active,Healthcare
+Owen Hayes X,T1051,Inactive,Retail
+Layla Nash M,T1052,Inactive,Telecom
+Owen Bailey P,T1053,Active,Retail
+Jack Reed Z,T1054,Active,Technology
+Ethan Carter I,T1055,Active,Finance
+Wyatt Murray M,T1056,Active,Finance
+Nora Reed K,T1057,Inactive,Healthcare
+Charlotte Carter G,T1058,Active,Logistics
+Nora Pierce I,T1059,Inactive,Technology
+Sofia Bailey B,T1060,Inactive,Hospitality
+Nora Nash E,T1061,Active,Education
+Ethan Keller C,T1062,Inactive,Hospitality
+Grace Dean D,T1063,Active,Manufacturing
+Amelia Fleming C,T1064,Inactive,Finance
+Chloe Sutton P,T1065,Inactive,Technology
+Benjamin Pierce M,T1066,Active,Education
+Jack Brooks I,T1067,Inactive,Insurance
+Henry Myers I,T1068,Active,Retail
+Charlotte Reed V,T1069,Inactive,Telecom
+Layla Myers R,T1070,Active,Logistics
+Leo Keller R,T1071,Inactive,Hospitality
+Sofia Nash J,T1072,Active,Logistics
+Ava Conrad S,T1073,Active,Finance
+Jack Murray F,T1074,Active,Manufacturing
+Elijah Brooks N,T1075,Active,Logistics
+Logan Foster T,T1076,Inactive,Education
+Benjamin Reed M,T1077,Inactive,Telecom
+Wyatt Porter Q,T1078,Inactive,Healthcare
+Leo Keller D,T1079,Inactive,Retail
+Elijah Bailey D,T1080,Active,Technology
+Nora Bishop N,T1081,Inactive,Logistics
+Grace Nash B,T1082,Active,Technology
+Owen Foster T,T1083,Inactive,Healthcare
+Owen Carter W,T1084,Active,Healthcare
+Grace Porter L,T1085,Active,Education
+Chloe Fleming I,T1086,Inactive,Finance
+Sofia Foster J,T1087,Inactive,Education
+Henry Keller T,T1088,Active,Manufacturing
+Jack Dean N,T1089,Inactive,Telecom
+Luna Brooks Q,T1090,Active,Finance
+Chloe Conrad M,T1091,Active,Telecom
+Ethan Murray G,T1092,Active,Healthcare
+Sofia Brooks O,T1093,Active,Education
+Logan Porter L,T1094,Inactive,Telecom
+Owen Bailey V,T1095,Active,Manufacturing
+Luna Nash T,T1096,Inactive,Retail
+Grace Pierce L,T1097,Inactive,Retail
+Henry Reed J,T1098,Active,Logistics
+Ava Murray S,T1099,Active,Manufacturing

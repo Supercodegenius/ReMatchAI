@@ -1,0 +1,13 @@
+.DS_Store
+node_modules
+.tmp
+npm-debug.log
+**/openai_key.txt
+.streamlit/config.toml
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+Source/data_upload.db
+.venv/
+.streamlit*.log
+~$*.xlsx

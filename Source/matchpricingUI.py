@@ -295,6 +295,7 @@ with payg_col:
     )
     if st.button(
         "Get Started",
+      type="primary",
         use_container_width=True,
         key="pricing_payg_card_get_started",
     ):
@@ -318,7 +319,7 @@ with sub_col:
         """,
         unsafe_allow_html=True,
     )
-    st.button("Get Started", use_container_width=True, key="pricing_subscription_get_started")
+    st.button("Get Started", type="primary", use_container_width=True, key="pricing_subscription_get_started")
 
 with ent_col:
     st.markdown(
@@ -335,7 +336,7 @@ with ent_col:
         """,
         unsafe_allow_html=True,
     )
-    st.button("Get Started", use_container_width=True, key="pricing_enterprise_get_started")
+    st.button("Get Started", type="primary", use_container_width=True, key="pricing_enterprise_get_started")
 
 @st.dialog("Log In", width="small")
 def _render_pricing_login_dialog() -> None:

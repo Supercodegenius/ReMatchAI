@@ -112,7 +112,7 @@ st.markdown(
           </p>
           <div class="hero-cta">
             <a class="cta-btn" href="?page=whymatch" target="_self">Why Match</a>
-            <a class="cta-btn" href="?page=pricing" target="_self">Price Model</a>
+                        <a class="cta-btn" href="?page=rematchpricing" target="_self">Price Model</a>
             <a class="cta-btn" href="?page=howmatchworks" target="_self">How it Works</a>
           </div>
         </div>

@@ -298,7 +298,7 @@ with payg_col:
         use_container_width=True,
         key="pricing_payg_card_get_started",
     ):
-        st.query_params["page"] = "pricing"
+        st.query_params["page"] = "rematchpricing"
         st.query_params["pricing_flow"] = "payg"
         st.rerun()
 
@@ -375,7 +375,7 @@ def _render_pricing_login_dialog() -> None:
 
   if cancel_clicked:
     st.session_state["pricing_show_login_dialog"] = False
-    st.query_params["page"] = "pricing"
+    st.query_params["page"] = "rematchpricing"
     if "pricing_flow" in st.query_params:
       del st.query_params["pricing_flow"]
     st.rerun()
@@ -597,18 +597,18 @@ if pricing_flow == "payg":
 
             logout_col, close_col = st.columns(2, gap="small")
             with logout_col:
-                if st.button("Log Out", use_container_width=True, key="pricing_logout_button"):
-                    st.session_state["pricing_logged_in"] = False
-                    st.session_state["pricing_show_login_dialog"] = False
-                    st.session_state.pop("pricing_onboarding_step", None)
-                    st.session_state.pop("pricing_user_email", None)
-                    st.rerun()
+              if st.button("Log Out", use_container_width=True, key="pricing_logout_button"):
+                st.session_state["pricing_logged_in"] = False
+                st.session_state["pricing_show_login_dialog"] = False
+                st.session_state.pop("pricing_onboarding_step", None)
+                st.session_state.pop("pricing_user_email", None)
+                st.rerun()
             with close_col:
-                if st.button("Close Setup", use_container_width=True, key="pricing_close_setup_button"):
-                    st.query_params["page"] = "pricing"
-                    if "pricing_flow" in st.query_params:
-                        del st.query_params["pricing_flow"]
-                    st.rerun()
+              if st.button("Close Setup", use_container_width=True, key="pricing_close_setup_button"):
+                st.query_params["page"] = "rematchpricing"
+                if "pricing_flow" in st.query_params:
+                  del st.query_params["pricing_flow"]
+                st.rerun()
 
 left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
 with button_col:

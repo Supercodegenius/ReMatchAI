@@ -293,6 +293,7 @@ with payg_col:
         """,
         unsafe_allow_html=True,
     )
+    st.markdown('<div style="margin-top:-0.55rem;"></div>', unsafe_allow_html=True)
     if st.button(
         "Get Started",
       type="primary",
@@ -319,6 +320,7 @@ with sub_col:
         """,
         unsafe_allow_html=True,
     )
+    st.markdown('<div style="margin-top:-0.55rem;"></div>', unsafe_allow_html=True)
     st.button("Get Started", type="primary", use_container_width=True, key="pricing_subscription_get_started")
 
 with ent_col:
@@ -336,7 +338,16 @@ with ent_col:
         """,
         unsafe_allow_html=True,
     )
+    st.markdown('<div style="margin-top:-0.55rem;"></div>', unsafe_allow_html=True)
     st.button("Get Started", type="primary", use_container_width=True, key="pricing_enterprise_get_started")
+
+left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
+with button_col:
+    if st.button("Back to Landing", type="primary", use_container_width=True, key="pricing_back_to_landing"):
+        st.query_params["page"] = "landing"
+        if "pricing_flow" in st.query_params:
+            del st.query_params["pricing_flow"]
+        st.rerun()
 
 @st.dialog("Log In", width="small")
 def _render_pricing_login_dialog() -> None:
@@ -611,8 +622,3 @@ if pricing_flow == "payg":
                   del st.query_params["pricing_flow"]
                 st.rerun()
 
-left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
-with button_col:
-    if st.button("Back to Landing", type="primary", use_container_width=True, key="pricing_back_to_landing"):
-        st.query_params["page"] = "landing"
-        st.rerun()

@@ -145,13 +145,18 @@ footer {
   letter-spacing: 0.01em;
   box-shadow: 0 8px 16px rgba(15, 98, 255, 0.28);
   white-space: nowrap;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
 }
 
-.cta-btn:link,
-.cta-btn:visited,
-.cta-btn:hover,
-.cta-btn:active {
-  color: #ffffff;
+.landing-shell a.cta-btn:link,
+.landing-shell a.cta-btn:visited,
+.landing-shell a.cta-btn:hover,
+.landing-shell a.cta-btn:active,
+.landing-shell a.cta-btn:focus,
+.landing-shell a.cta-btn:focus-visible {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
 }
 
 .hero {

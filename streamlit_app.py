@@ -4,6 +4,7 @@ import streamlit as st
 
 
 BASE_DIR = os.path.dirname(__file__)
+DEPLOY_REV = "2026-04-30-payg-pricing"
 
 page = st.query_params.get("page", "landing")
 

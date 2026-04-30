@@ -22,12 +22,12 @@ from Source.bulknamematching import (
 
 # ── Constants ────────────────────────────────────────────────────────────────
 METHOD_KEY_MAP = {
-    "Exact Match": "exact",
-    "Fuzzy Match": "fuzzy",
-    "Soundex Match": "soundex",
-    "Jaro-Winkler Distance Match": "jaro_winkler",
-    "Levenshtein Match": "levenshtein",
-    "AI Advance Match": "ai_advanced",
+    "ENCCLT Match": "exact",
+    "FNCCLT Match": "fuzzy",
+    "SNCCLT Match": "soundex",
+    "JNCCLT Match": "jaro_winkler",
+    "LNCCLT Match": "levenshtein",
+    "AINCCLT Match": "ai_advanced",
 }
 
 # ── Page header ──────────────────────────────────────────────────────────────
@@ -211,7 +211,7 @@ with ms_c1:
     bulk_method_label = st.selectbox(
         "Method",
         list(METHOD_KEY_MAP.keys()),
-        index=1,  # Fuzzy by default
+        index=1,  # FNCCLT by default
         key="bulk_method",
     )
 with ms_c2:

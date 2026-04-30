@@ -85,15 +85,34 @@ _TERMINAL_LEGAL_SUFFIX_VARIANTS = {
     "s p a": "spa",
 }
 
+_DASH_RE = re.compile(r"[\u2010-\u2015\u2212\u002d]")
+_NON_ALNUM_SPACE_RE = re.compile(r"[^a-z0-9\s]")
+_WHITESPACE_RE = re.compile(r"\s+")
+_TERMINAL_SUFFIX_TOKEN_MAP = {
+    tuple(variant.split()): canonical
+    for variant, canonical in _TERMINAL_LEGAL_SUFFIX_VARIANTS.items()
+}
+_MAX_TERMINAL_SUFFIX_TOKENS = max((len(tokens) for tokens in _TERMINAL_SUFFIX_TOKEN_MAP), default=0)
+
 
 def _canonicalize_terminal_legal_suffix(text: str) -> str:
     normalized = str(text or "").strip()
     if not normalized:
         return ""
 
-    for variant, canonical in _TERMINAL_LEGAL_SUFFIX_VARIANTS.items():
-        normalized = re.sub(rf"\b{variant}\b$", canonical, normalized)
-    return normalized
+    tokens = normalized.split()
+    if not tokens:
+        return ""
+
+    max_len = min(len(tokens), _MAX_TERMINAL_SUFFIX_TOKENS)
+    for suffix_len in range(max_len, 0, -1):
+        tail = tuple(tokens[-suffix_len:])
+        canonical = _TERMINAL_SUFFIX_TOKEN_MAP.get(tail)
+        if canonical is None:
+            continue
+        tokens = tokens[:-suffix_len] + [canonical]
+        break
+    return " ".join(tokens)
 
 _LEGAL_SUFFIXES = {
     "ltd", "limited", "plc", "llc", "inc", "corp", "co", "company",
@@ -102,16 +121,21 @@ _LEGAL_SUFFIXES = {
 }
 
 
-def normalize_name(value: str) -> str:
-    """Normalize names for more reliable comparisons."""
-    text = str(value).strip().lower()
-    text = re.sub(r"[\u2010-\u2015\u2212\u002d]", " ", text)  # replace hyphens/dashes with space before encoding
+@lru_cache(maxsize=250000)
+def _normalize_name_cached(raw_text: str) -> str:
+    text = raw_text.strip().lower()
+    text = _DASH_RE.sub(" ", text)  # replace hyphens/dashes with space before encoding
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
-    text = re.sub(r"[^a-z0-9\s]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = _NON_ALNUM_SPACE_RE.sub(" ", text)
+    text = _WHITESPACE_RE.sub(" ", text).strip()
     text = _canonicalize_terminal_legal_suffix(text)
     tokens = [t for t in text.split() if t not in _LEGAL_SUFFIXES]
     return " ".join(tokens)
+
+
+def normalize_name(value: str) -> str:
+    """Normalize names for more reliable comparisons."""
+    return _normalize_name_cached(str(value or ""))
 
 
 def fuzzy_score(a: str, b: str) -> int:
@@ -482,6 +506,10 @@ def _load_slm_runtime():
     import torch
     import torch.nn.functional as F
     from transformers import AutoModel, AutoTokenizer
+    try:
+        import faiss
+    except Exception:
+        faiss = None
 
     script_dir = Path(__file__).resolve().parent
     candidates = [
@@ -504,8 +532,9 @@ def _load_slm_runtime():
         )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    encoder = AutoModel.from_pretrained(model_dir).to(device)
+    # Force local model resolution to avoid remote hub checks during cold start.
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+    encoder = AutoModel.from_pretrained(model_dir, local_files_only=True).to(device)
     encoder.eval()
     embedding_cache: dict[str, torch.Tensor] = {}
 
@@ -522,7 +551,7 @@ def _load_slm_runtime():
 
         missing_texts = [text for text in dict.fromkeys(texts) if text not in embedding_cache]
         if missing_texts:
-            with torch.no_grad():
+            with torch.inference_mode():
                 for start in range(0, len(missing_texts), batch_size):
                     chunk = missing_texts[start:start + batch_size]
                     encoded = tokenizer(
@@ -533,9 +562,11 @@ def _load_slm_runtime():
                         max_length=64,
                     )
                     encoded = {k: v.to(device) for k, v in encoded.items()}
-                    output = encoder(**encoded)
-                    pooled = _mean_pool(output.last_hidden_state, encoded["attention_mask"])
-                    normalized = F.normalize(pooled, p=2, dim=1).detach().cpu()
+                    autocast_enabled = device == "cuda"
+                    with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=autocast_enabled):
+                        output = encoder(**encoded)
+                        pooled = _mean_pool(output.last_hidden_state, encoded["attention_mask"])
+                    normalized = F.normalize(pooled.float(), p=2, dim=1).detach().cpu()
                     for i, text in enumerate(chunk):
                         embedding_cache[text] = normalized[i]
 
@@ -548,6 +579,7 @@ def _load_slm_runtime():
     return {
         "torch": torch,
         "embed_many": _embed_many,
+        "faiss": faiss,
     }
 
 
@@ -555,6 +587,79 @@ def warmup_slm_runtime() -> None:
     runtime = _load_slm_runtime()
     embed_many = runtime["embed_many"]
     embed_many(["slm warmup"])
+
+
+def prime_slm_match_runtime(
+    target_names: Iterable[str] | None = None,
+    source_names: Iterable[str] | None = None,
+) -> dict[str, int]:
+    """
+    Prime SLM runtime caches so first user-visible matching run is faster.
+
+    This prepares model/runtime, text embeddings, and ANN index (when FAISS is available)
+    using the currently loaded source/target names.
+    """
+    runtime = _load_slm_runtime()
+    embed_many = runtime["embed_many"]
+
+    def _normalize_unique(values: Iterable[str] | None) -> list[str]:
+        if values is None:
+            return []
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for raw in values:
+            normalized = normalize_name(str(raw or ""))
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            ordered.append(normalized)
+        return ordered
+
+    target_normalized = _normalize_unique(target_names)
+    source_normalized = _normalize_unique(source_names)
+
+    warmup_texts = ["slm warmup"]
+    warmup_texts.extend(target_normalized)
+    warmup_texts.extend(source_normalized)
+
+    if warmup_texts:
+        embed_many(warmup_texts)
+
+    if target_normalized:
+        _build_slm_ann_assets(tuple(target_normalized))
+
+    return {
+        "target_count": len(target_normalized),
+        "source_count": len(source_normalized),
+    }
+
+
+@lru_cache(maxsize=2)
+def _build_slm_ann_assets(target_normalized_tuple: tuple[str, ...]) -> dict[str, object] | None:
+    if not target_normalized_tuple:
+        return None
+
+    runtime = _load_slm_runtime()
+    faiss = runtime.get("faiss")
+    if faiss is None:
+        return None
+
+    embed_many = runtime["embed_many"]
+    try:
+        target_embeddings = (
+            embed_many(list(target_normalized_tuple))
+            .detach()
+            .cpu()
+            .numpy()
+            .astype("float32", copy=False)
+        )
+        ann_index = faiss.IndexFlatIP(target_embeddings.shape[1])
+        ann_index.add(target_embeddings)
+        return {
+            "index": ann_index,
+        }
+    except Exception:
+        return None
 
 
 def _build_candidate_getter(target_normalized: list[str]) -> Callable[[str], list[int]]:
@@ -565,7 +670,7 @@ def _build_candidate_getter(target_normalized: list[str]) -> Callable[[str], lis
     For larger lists we use lightweight blocking and bounded fallbacks.
     """
     target_count = len(target_normalized)
-    if target_count <= 3000:
+    if target_count <= 1500:
         all_indices = list(range(target_count))
         return lambda _src_n: all_indices
 
@@ -585,8 +690,8 @@ def _build_candidate_getter(target_normalized: list[str]) -> Callable[[str], lis
 
     all_indices = list(range(target_count))
 
-    max_candidates = 400
-    max_pool = 800
+    max_candidates = 320
+    max_pool = 640
     max_bucket_take = 200
 
     def get_candidates(src_n: str) -> list[int]:
@@ -1103,6 +1208,7 @@ def match_names(
         slm_runtime = _load_slm_runtime()
         torch = slm_runtime["torch"]
         embed_many = slm_runtime["embed_many"]
+        faiss = slm_runtime.get("faiss")
         best_cache = {}
         all_indices = list(range(len(target_originals)))
         slm_shortlist_max = 80
@@ -1116,58 +1222,77 @@ def match_names(
             for idx, name in enumerate(unique_source_norm)
         }
 
+        ann_best_map: dict[str, tuple[int, float]] = {}
+        if faiss is not None and target_normalized:
+            try:
+                ann_assets = _build_slm_ann_assets(tuple(target_normalized))
+                if ann_assets is None:
+                    raise RuntimeError("ANN assets unavailable")
+                ann_index = ann_assets["index"]
+                source_embeddings_np = (
+                    source_embeddings.detach().cpu().numpy().astype("float32", copy=False)
+                )
+                ann_scores, ann_indices = ann_index.search(source_embeddings_np, 1)
+                for idx, src_n in enumerate(unique_source_norm):
+                    best_idx = int(ann_indices[idx][0])
+                    best_score = float(ann_scores[idx][0])
+                    ann_best_map[src_n] = (best_idx, best_score)
+            except Exception:
+                ann_best_map = {}
+
         candidate_map: dict[str, list[int]] = {}
-        required_target_indices: set[int] = set()
-        for src_n in unique_source_norm:
-            if src_n in target_exact_map:
-                continue
+        if not ann_best_map:
+            required_target_indices: set[int] = set()
+            for src_n in unique_source_norm:
+                if src_n in target_exact_map:
+                    continue
 
-            candidate_indices = get_candidates(src_n)
-            if not candidate_indices:
-                candidate_indices = all_indices
-            elif len(candidate_indices) > slm_large_shortlist_trigger:
-                if _rf_process is not None and _rf_fuzz is not None:
-                    candidate_names = [target_normalized[idx] for idx in candidate_indices]
-                    shortlist_hits = _rf_process.extract(
-                        src_n,
-                        candidate_names,
-                        scorer=_rf_fuzz.ratio,
-                        processor=None,
-                        limit=slm_shortlist_max,
-                    )
-                    candidate_indices = [candidate_indices[int(hit[2])] for hit in shortlist_hits]
-                else:
-                    src_len = len(src_n)
-                    src_first_char = src_n[:1]
-                    candidate_indices = sorted(
-                        candidate_indices,
-                        key=lambda idx: (
-                            abs(target_lengths[idx] - src_len),
-                            0 if target_normalized[idx][:1] == src_first_char else 1,
-                        ),
-                    )[:slm_shortlist_max]
+                candidate_indices = get_candidates(src_n)
+                if not candidate_indices:
+                    candidate_indices = all_indices
+                elif len(candidate_indices) > slm_large_shortlist_trigger:
+                    if _rf_process is not None and _rf_fuzz is not None:
+                        candidate_names = [target_normalized[idx] for idx in candidate_indices]
+                        shortlist_hits = _rf_process.extract(
+                            src_n,
+                            candidate_names,
+                            scorer=_rf_fuzz.ratio,
+                            processor=None,
+                            limit=slm_shortlist_max,
+                        )
+                        candidate_indices = [candidate_indices[int(hit[2])] for hit in shortlist_hits]
+                    else:
+                        src_len = len(src_n)
+                        src_first_char = src_n[:1]
+                        candidate_indices = sorted(
+                            candidate_indices,
+                            key=lambda idx: (
+                                abs(target_lengths[idx] - src_len),
+                                0 if target_normalized[idx][:1] == src_first_char else 1,
+                            ),
+                        )[:slm_shortlist_max]
 
-            candidate_map[src_n] = candidate_indices
-            required_target_indices.update(candidate_indices)
+                candidate_map[src_n] = candidate_indices
+                required_target_indices.update(candidate_indices)
 
-        if required_target_indices:
-            required_index_list = sorted(required_target_indices)
-            required_target_texts = [target_normalized[idx] for idx in required_index_list]
-            required_target_embeddings = embed_many(required_target_texts)
-            required_index_to_pos = {
-                idx: pos for pos, idx in enumerate(required_index_list)
-            }
-            candidate_pos_map = {
-                src_n: [required_index_to_pos[idx] for idx in idx_list]
-                for src_n, idx_list in candidate_map.items()
-            }
-        else:
-            required_target_embeddings = torch.empty(
-                (0, source_embeddings.shape[1]),
-                device=source_embeddings.device,
-            )
-            required_index_to_pos = {}
-            candidate_pos_map = {}
+            if required_target_indices:
+                required_index_list = sorted(required_target_indices)
+                required_target_texts = [target_normalized[idx] for idx in required_index_list]
+                required_target_embeddings = embed_many(required_target_texts)
+                required_index_to_pos = {
+                    idx: pos for pos, idx in enumerate(required_index_list)
+                }
+                candidate_pos_map = {
+                    src_n: [required_index_to_pos[idx] for idx in idx_list]
+                    for src_n, idx_list in candidate_map.items()
+                }
+            else:
+                required_target_embeddings = torch.empty(
+                    (0, source_embeddings.shape[1]),
+                    device=source_embeddings.device,
+                )
+                required_index_to_pos = {}
+                candidate_pos_map = {}
 
         for src, src_n, src_query_n in zip(src_series, src_norm, src_slm_query):
             if src_n not in best_cache:
@@ -1186,28 +1311,38 @@ def match_names(
                     results.append({"source_name": src, **best_cache[src_n]})
                     continue
 
-                candidate_indices = candidate_map.get(src_query_n, all_indices)
-
                 best_name = ""
                 best_slm_score = -1.0
                 best_target_norm = ""
 
-                src_embedding = source_embedding_map[src_query_n]
-                if candidate_indices:
-                    candidate_positions = candidate_pos_map.get(src_query_n)
-                    if candidate_positions is None:
-                        candidate_positions = [required_index_to_pos[idx] for idx in candidate_indices]
-                    candidate_tensor = required_target_embeddings[candidate_positions]
-                    similarities = torch.matmul(candidate_tensor, src_embedding)
-                    best_pos = int(torch.argmax(similarities).item())
-                    best_idx = candidate_indices[best_pos]
-                    best_slm_score = float(similarities[best_pos].item())
-                    if best_slm_score < -1.0:
-                        best_slm_score = -1.0
-                    elif best_slm_score > 1.0:
-                        best_slm_score = 1.0
-                    best_name = target_originals[best_idx]
-                    best_target_norm = target_normalized[best_idx]
+                ann_hit = ann_best_map.get(src_query_n)
+                if ann_hit is not None:
+                    best_idx, best_slm_score = ann_hit
+                    if 0 <= best_idx < len(target_originals):
+                        if best_slm_score < -1.0:
+                            best_slm_score = -1.0
+                        elif best_slm_score > 1.0:
+                            best_slm_score = 1.0
+                        best_name = target_originals[best_idx]
+                        best_target_norm = target_normalized[best_idx]
+                else:
+                    candidate_indices = candidate_map.get(src_query_n, all_indices)
+                    src_embedding = source_embedding_map[src_query_n]
+                    if candidate_indices:
+                        candidate_positions = candidate_pos_map.get(src_query_n)
+                        if candidate_positions is None:
+                            candidate_positions = [required_index_to_pos[idx] for idx in candidate_indices]
+                        candidate_tensor = required_target_embeddings[candidate_positions]
+                        similarities = torch.matmul(candidate_tensor, src_embedding)
+                        best_pos = int(torch.argmax(similarities).item())
+                        best_idx = candidate_indices[best_pos]
+                        best_slm_score = float(similarities[best_pos].item())
+                        if best_slm_score < -1.0:
+                            best_slm_score = -1.0
+                        elif best_slm_score > 1.0:
+                            best_slm_score = 1.0
+                        best_name = target_originals[best_idx]
+                        best_target_norm = target_normalized[best_idx]
 
                 guard_ok = _slm_lexical_guard_passes(src_query_n, best_target_norm)
                 score_0_100 = int(round((best_slm_score + 1.0) * 50.0))

@@ -147,6 +147,7 @@ footer {
   white-space: nowrap;
 }
 
+.cta-btn:link,
 .cta-btn:visited,
 .cta-btn:hover,
 .cta-btn:active {

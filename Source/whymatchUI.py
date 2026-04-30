@@ -311,8 +311,8 @@ html(
 
                 <div class="wm-grid">
                   <article class="wm-card">
-                    <div class="wm-icon"><span class="wm-icon-check">✓</span></div>
-                    <h2>Now</h2>
+                    <div class="wm-icon"><span class="wm-icon-check">&#10003;</span></div>
+                    <h1>Now</h1>
                     <ul class="wm-list">
                       <li>Multi-Method Matching (6 Methods)</li>
                       <li>Self-Learning AI</li>
@@ -320,8 +320,8 @@ html(
                     </ul>
                   </article>
                   <article class="wm-card">
-                    <div class="wm-icon"><span class="wm-icon-sun">✶</span></div>
-                    <h2>Soon</h2>
+                    <div class="wm-icon"><span class="wm-icon-sun">&#10038;</span></div>
+                    <h1>Soon</h1>
                     <ul class="wm-list">
                       <li>Batch Processing</li>
                       <li>Exposure Calculation</li>

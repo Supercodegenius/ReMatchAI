@@ -298,7 +298,7 @@ html(
 
               <div class="hm-grid">
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-mark">✓</span></div>
+                  <div class="hm-icon"><span class="hm-icon-mark">&#10003;</span></div>
                   <h2 class="hm-card-title">Multi-Method Matching Engine</h2>
                   <p class="hm-card-text">
                     <span class="hm-highlight">6 algorithms</span> for unparalleled accuracy. Exact, Fuzzy, Soundex, Jaro-Winkler, Levenshtein &amp; AIMatch
@@ -306,7 +306,7 @@ html(
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-star">✶</span></div>
+                  <div class="hm-icon"><span class="hm-icon-star">&#10038;</span></div>
                   <h2 class="hm-card-title">AI-Powered Learning</h2>
                   <p class="hm-card-text">
                     Continuously improve based on your specific data patterns
@@ -314,7 +314,7 @@ html(
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-sliders">☷</span></div>
+                  <div class="hm-icon"><span class="hm-icon-sliders">&#9783;</span></div>
                   <h2 class="hm-card-title">Adjustable Match Thresholds</h2>
                   <p class="hm-card-text">
                     Fine-tune confidence levels to suit your risk appetite
@@ -322,7 +322,7 @@ html(
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-bars">▥</span></div>
+                  <div class="hm-icon"><span class="hm-icon-bars">&#9637;</span></div>
                   <h2 class="hm-card-title">Built In Detail For Scale</h2>
                   <p class="hm-card-text">
                     50,000 records matched in seconds. Other tools take 5-10 for the same task
@@ -334,7 +334,7 @@ html(
         </html>
         """
     ),
-    height=500,
+    height=400,
     scrolling=False,
 )
 

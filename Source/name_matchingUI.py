@@ -329,6 +329,7 @@ BASE_DIR = os.path.dirname(__file__)
 DEMO_SOURCE_PATH = os.path.join(BASE_DIR, "demo_data", "source_names.csv")
 DEMO_TARGET_PATH = os.path.join(BASE_DIR, "demo_data", "target_names.csv")
 DATA_UPLOAD_DB_PATH = os.path.join(BASE_DIR, "data_upload.db")
+FEEDBACK_DB_PATH = os.path.join(BASE_DIR, "..", "outputs", "match_feedback.db")
 CONTROL_SETTINGS_XML_PATH = os.path.join(BASE_DIR, "control_settings.xml")
 
 CONTROL_REGISTRY = [
@@ -1250,7 +1251,7 @@ st.markdown(
 
 up_col1, up_col2 = st.columns(2, gap="large")
 with up_col1:
-    st.markdown("<strong>Source File</strong>", unsafe_allow_html=True)
+    st.markdown("<strong><b>Source File</b></strong>", unsafe_allow_html=True)
     left_file = st.file_uploader("", type=["csv", "xlsx"], key="source_file")
 with up_col2:
     st.markdown("<strong>Reference File</strong>", unsafe_allow_html=True)
@@ -1474,6 +1475,16 @@ full_result_df = st.session_state.get("result_df")
 if full_result_df is None:
     st.info("No results available yet. Run matching again.")
     st.stop()
+
+# Apply self-learning feedback overrides
+try:
+    from Source.namematching import load_match_feedback, apply_match_feedback
+    _fb = load_match_feedback(FEEDBACK_DB_PATH)
+    if _fb["approved"] or _fb["rejected"]:
+        full_result_df = apply_match_feedback(full_result_df, _fb)
+        st.session_state["result_df"] = full_result_df
+except Exception:
+    pass
 
 result_df = full_result_df
 if show_only_matches and "is_match" in full_result_df.columns:
@@ -1772,6 +1783,51 @@ st.link_button(
     "https://www.linkedin.com/in/surabhi-singh-368042167/",
     use_container_width=True,
 )
+
+# ---------------------------------------------------------------------------
+# Self-learning feedback section
+# ---------------------------------------------------------------------------
+st.markdown("---")
+with st.expander("Confirm Matches — Self-Learning Feedback", expanded=False):
+    st.caption(
+        "Mark each result as correct or incorrect. "
+        "Saved decisions are applied automatically on every future run."
+    )
+    _fb_view = result_df_view[[c for c in ["source_name", "matched_name", "score", "is_match"] if c in result_df_view.columns]].copy()
+    _fb_view["is_correct"] = _fb_view.get("is_match", False)
+    _col_cfg = {
+        "source_name": st.column_config.TextColumn("Source Name", disabled=True),
+        "matched_name": st.column_config.TextColumn("Matched Name", disabled=True),
+        "score": st.column_config.NumberColumn("Score", disabled=True),
+        "is_match": st.column_config.CheckboxColumn("Auto Match", disabled=True),
+        "is_correct": st.column_config.CheckboxColumn("✓ Correct?", help="Check to confirm this match, uncheck to reject it"),
+    }
+    _edited_fb = st.data_editor(
+        _fb_view,
+        hide_index=True,
+        use_container_width=True,
+        height=340,
+        key="feedback_editor",
+        column_config=_col_cfg,
+        disabled=[c for c in _col_cfg if c != "is_correct"],
+    )
+    if st.button("Save Feedback", type="primary", use_container_width=True):
+        try:
+            from Source.namematching import save_match_feedback
+            _fb_rows = [
+                {
+                    "source_name": str(row.get("source_name", "")),
+                    "matched_name": str(row.get("matched_name", "")),
+                    "is_correct": bool(row.get("is_correct", False)),
+                }
+                for _, row in _edited_fb.iterrows()
+                if str(row.get("matched_name", "")).strip()
+            ]
+            _saved = save_match_feedback(_fb_rows, FEEDBACK_DB_PATH)
+            st.success(f"Saved {_saved} feedback entries. Results will update on next run.")
+            st.rerun()
+        except Exception as _exc:
+            st.error(f"Could not save feedback: {_exc}")
 
 st.markdown('<div class="nm-chat-shell">', unsafe_allow_html=True)
 st.markdown(

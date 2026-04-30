@@ -493,6 +493,12 @@ def _slm_lexical_guard_passes(a: str, b: str) -> bool:
     tokens_a = {tok for tok in a.split() if tok}
     tokens_b = {tok for tok in b.split() if tok}
     overlap = len(tokens_a & tokens_b)
+
+    # Multi-token names with zero shared tokens need high character-level similarity.
+    # This prevents false positives like "volvo cars" matching "viola art".
+    if overlap == 0 and len(tokens_a) > 1 and len(tokens_b) > 1:
+        return seq_ratio >= 0.65
+
     overlap_ratio = (
         overlap / max(1, min(len(tokens_a), len(tokens_b)))
         if tokens_a and tokens_b
@@ -1362,3 +1368,117 @@ def match_names(
         return pd.DataFrame(results)
 
     raise ValueError(f"Unknown method: {method}")
+
+
+# ---------------------------------------------------------------------------
+# Self-learning feedback helpers
+# ---------------------------------------------------------------------------
+
+def load_match_feedback(db_path: str) -> dict:
+    """Load approved / rejected match pairs from the feedback SQLite DB."""
+    import sqlite3 as _sqlite3
+    approved: dict[str, str] = {}       # source_norm -> target_original
+    rejected: set[tuple[str, str]] = set()  # (source_norm, target_norm)
+    try:
+        with _sqlite3.connect(db_path) as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS match_feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_name TEXT NOT NULL,
+                    matched_name TEXT NOT NULL,
+                    is_correct INTEGER NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
+            rows = conn.execute(
+                "SELECT source_name, matched_name, is_correct FROM match_feedback"
+            ).fetchall()
+        for src, tgt, correct in rows:
+            src_n = normalize_name(str(src or ""))
+            tgt_n = normalize_name(str(tgt or ""))
+            if src_n and tgt_n:
+                if correct:
+                    approved[src_n] = str(tgt)
+                else:
+                    rejected.add((src_n, tgt_n))
+    except Exception:
+        pass
+    return {"approved": approved, "rejected": rejected}
+
+
+def save_match_feedback(feedback_rows: list, db_path: str) -> int:
+    """Persist feedback rows to SQLite. Returns number of rows saved."""
+    import sqlite3 as _sqlite3
+    import datetime as _datetime
+    try:
+        with _sqlite3.connect(db_path) as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS match_feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_name TEXT NOT NULL,
+                    matched_name TEXT NOT NULL,
+                    is_correct INTEGER NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
+            now = _datetime.datetime.utcnow().isoformat()
+            payloads = [
+                (
+                    str(row.get("source_name", "")),
+                    str(row.get("matched_name", "")),
+                    1 if row.get("is_correct") else 0,
+                    now,
+                )
+                for row in feedback_rows
+                if str(row.get("source_name", "")).strip()
+                and str(row.get("matched_name", "")).strip()
+            ]
+            conn.executemany(
+                """
+                INSERT INTO match_feedback (source_name, matched_name, is_correct, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                payloads,
+            )
+            conn.commit()
+        return len(payloads)
+    except Exception:
+        return 0
+
+
+def apply_match_feedback(
+    results_df: "pd.DataFrame",
+    feedback: dict,
+) -> "pd.DataFrame":
+    """Override matching results using stored human feedback."""
+    import pandas as pd
+    approved = feedback.get("approved", {})
+    rejected = feedback.get("rejected", set())
+    if not approved and not rejected:
+        return results_df
+    df = results_df.copy()
+    if "feedback_override" not in df.columns:
+        df["feedback_override"] = ""
+    for idx, row in df.iterrows():
+        src_n = str(
+            row.get("source_normalized", normalize_name(str(row.get("source_name", ""))))
+        )
+        if src_n in approved:
+            df.at[idx, "matched_name"] = approved[src_n]
+            df.at[idx, "score"] = 100
+            df.at[idx, "is_match"] = True
+            df.at[idx, "feedback_override"] = "confirmed"
+        else:
+            matched = str(row.get("matched_name", ""))
+            if matched:
+                matched_n = normalize_name(matched)
+                if (src_n, matched_n) in rejected:
+                    df.at[idx, "matched_name"] = ""
+                    df.at[idx, "score"] = 0
+                    df.at[idx, "is_match"] = False
+                    df.at[idx, "feedback_override"] = "rejected"
+    return df

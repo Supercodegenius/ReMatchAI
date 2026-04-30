@@ -1250,10 +1250,10 @@ st.markdown(
 
 up_col1, up_col2 = st.columns(2, gap="large")
 with up_col1:
-    st.markdown("<p style='font-weight: 700;'>Source File</p>", unsafe_allow_html=True)
+    st.markdown("<strong>Source File</strong>", unsafe_allow_html=True)
     left_file = st.file_uploader("", type=["csv", "xlsx"], key="source_file")
 with up_col2:
-    st.markdown("<p style='font-weight: 700;'>Reference File</p>", unsafe_allow_html=True)
+    st.markdown("<strong>Reference File</strong>", unsafe_allow_html=True)
     right_file = st.file_uploader("", type=["csv", "xlsx"], key="reference_file")
 
 if use_demo_files:

@@ -335,7 +335,7 @@ CONTROL_SETTINGS_XML_PATH = os.path.join(BASE_DIR, "control_settings.xml")
 CONTROL_REGISTRY = [
     {"id": "data_upload_button", "type": "button", "label": "Data Upload"},
     {"id": "data_preview_button", "type": "button", "label": "Data Preview"},
-    {"id": "run_name_matching_button", "type": "button", "label": "Run name matching"},
+    {"id": "run_name_matching_button", "type": "button", "label": "Run Name Matching"},
     {"id": "clear_chat_button", "type": "button", "label": "Clear chat"},
     {"id": "best_method_button", "type": "button", "label": "Best method?"},
     {"id": "tune_threshold_button", "type": "button", "label": "Tune threshold"},

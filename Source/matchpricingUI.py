@@ -344,7 +344,7 @@ with ent_col:
 left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
 with button_col:
   st.link_button("Back to Landing", "?page=landing", type="primary", use_container_width=True)
-  st.markdown('<style>div[data-testid="stElementContainer"] a[href="?page=landing"] { font-weight: 700; }</style>', unsafe_allow_html=True)
+  st.markdown('<style>div[data-testid="stElementContainer"] a[href="?page=landing"] { font-weight: 400; }</style>', unsafe_allow_html=True)
 
 @st.dialog("Log In", width="small")
 def _render_pricing_login_dialog() -> None:

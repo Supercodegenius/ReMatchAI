@@ -2,7 +2,7 @@
 <controls>
   <control id="data_upload_button" type="button" label="Data Upload" enabled="true" />
   <control id="data_preview_button" type="button" label="Data Preview" enabled="true" />
-  <control id="run_name_matching_button" type="button" label="Run name matching" enabled="true" />
+  <control id="run_name_matching_button" type="button" label="Run Name Matching" enabled="true" />
   <control id="clear_chat_button" type="button" label="Clear chat" enabled="true" />
   <control id="best_method_button" type="button" label="Best method?" enabled="true" />
   <control id="tune_threshold_button" type="button" label="Tune threshold" enabled="true" />

@@ -1424,7 +1424,7 @@ with run_header_col:
     )
 with run_button_col:
     run_now = st.button(
-        "Run name matching",
+        "Run Name Matching",
         type="primary",
         use_container_width=True,
         disabled=not _is_control_enabled("run_name_matching_button"),

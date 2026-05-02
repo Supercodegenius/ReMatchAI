@@ -37,7 +37,6 @@ def _ensure_pricing_storage() -> None:
       )
       writer.writeheader()
 
-
 def _load_pricing_users() -> dict[str, dict[str, str]]:
   _ensure_pricing_storage()
   try:

@@ -789,6 +789,7 @@ if sidebar_menu == "Bulk Name Matching":
             ]
             if slm_available:
                 _bulk_method_opts.append("SLM Match")
+                _bulk_method_opts.append("SLM Adaptive Match")
 
             _bulk_method_sel = st.selectbox(
                 "Method",
@@ -799,7 +800,7 @@ if sidebar_menu == "Bulk Name Matching":
             if not slm_available and slm_unavailable_reason:
                 st.caption(slm_unavailable_reason)
 
-            if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match"}:
+            if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "SLM Adaptive Match"}:
                 st.slider("Fuzzy threshold", 0, 100, 75, 1, key="bulk_threshold")
             if _bulk_method_sel == "LNCCLT Match":
                 st.slider("Levenshtein max distance", 0, 10, 2, 1, key="bulk_lev_distance")
@@ -838,6 +839,7 @@ with st.sidebar:
         ]
         if slm_available:
             method_options.append("SLM Match")
+            method_options.append("SLM Adaptive Match")
 
         method = st.selectbox(
             "Method",
@@ -849,7 +851,7 @@ with st.sidebar:
         threshold = 75
         lev_max_distance = 2
         lev_engine = "auto"
-        if method in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match"}:
+        if method in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "SLM Adaptive Match"}:
             threshold = st.slider("Fuzzy threshold", 0, 100, 75, 1)
         if method == "LNCCLT Match":
             lev_max_distance = st.slider("Levenshtein max distance", 0, 10, 2, 1)
@@ -890,6 +892,7 @@ method_key = {
     "LNCCLT Match": "levenshtein",
     "AINCCLT Match": "ai_advanced",
     "SLM Match": "slm",
+    "SLM Adaptive Match": "slm_adaptive",
 }[method]
 
 if "slm_bulk_warmed" not in st.session_state:

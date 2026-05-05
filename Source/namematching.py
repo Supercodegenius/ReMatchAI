@@ -58,7 +58,16 @@ except Exception:
     _rf_fuzz = None
     _rf_process = None
 
-MatchMethod = Literal["exact", "fuzzy", "levenshtein", "jaro_winkler", "soundex", "ai_advanced", "slm"]
+MatchMethod = Literal[
+    "exact",
+    "fuzzy",
+    "levenshtein",
+    "jaro_winkler",
+    "soundex",
+    "ai_advanced",
+    "slm",
+    "slm_adaptive",
+]
 LevenshteinEngine = Literal["auto", "rapidfuzz", "python"]
 
 _TERMINAL_LEGAL_SUFFIX_VARIANTS = {
@@ -1210,7 +1219,7 @@ def match_names(
             results.append({"source_name": src, **best_cache[src_n]})
         return pd.DataFrame(results)
 
-    if method == "slm":
+    if method in {"slm", "slm_adaptive"}:
         slm_runtime = _load_slm_runtime()
         torch = slm_runtime["torch"]
         embed_many = slm_runtime["embed_many"]
@@ -1220,26 +1229,34 @@ def match_names(
         slm_shortlist_max = 80
         slm_large_shortlist_trigger = 100
         slm_threshold = max(0.0, min(1.0, float(fuzzy_threshold) / 100.0))
+        adaptive_mode = method == "slm_adaptive"
+        adaptive_accept_score = 98
         src_slm_query = src_norm.map(lambda n: _expand_slm_country_code(n, target_exact_map))
         unique_source_norm = list(dict.fromkeys(src_slm_query.tolist()))
-        source_embeddings = embed_many(unique_source_norm)
-        source_embedding_map = {
-            name: source_embeddings[idx]
-            for idx, name in enumerate(unique_source_norm)
-        }
+        source_embedding_map: dict[str, object] = {}
 
         ann_best_map: dict[str, tuple[int, float]] = {}
-        if faiss is not None and target_normalized:
+        fast_path_match_map: dict[str, dict] = {}
+        unresolved_sources: list[str] = []
+
+        if not adaptive_mode:
+            for src_query_n in unique_source_norm:
+                if src_query_n in target_exact_map:
+                    continue
+                unresolved_sources.append(src_query_n)
+
+        if not adaptive_mode and faiss is not None and target_normalized and unresolved_sources:
             try:
                 ann_assets = _build_slm_ann_assets(tuple(target_normalized))
                 if ann_assets is None:
                     raise RuntimeError("ANN assets unavailable")
                 ann_index = ann_assets["index"]
+                unresolved_embeddings = embed_many(unresolved_sources)
                 source_embeddings_np = (
-                    source_embeddings.detach().cpu().numpy().astype("float32", copy=False)
+                    unresolved_embeddings.detach().cpu().numpy().astype("float32", copy=False)
                 )
                 ann_scores, ann_indices = ann_index.search(source_embeddings_np, 1)
-                for idx, src_n in enumerate(unique_source_norm):
+                for idx, src_n in enumerate(unresolved_sources):
                     best_idx = int(ann_indices[idx][0])
                     best_score = float(ann_scores[idx][0])
                     ann_best_map[src_n] = (best_idx, best_score)
@@ -1247,7 +1264,7 @@ def match_names(
                 ann_best_map = {}
 
         candidate_map: dict[str, list[int]] = {}
-        if not ann_best_map:
+        if adaptive_mode or not ann_best_map:
             required_target_indices: set[int] = set()
             for src_n in unique_source_norm:
                 if src_n in target_exact_map:
@@ -1279,7 +1296,45 @@ def match_names(
                         )[:slm_shortlist_max]
 
                 candidate_map[src_n] = candidate_indices
-                required_target_indices.update(candidate_indices)
+
+                if adaptive_mode:
+                    best_idx = -1
+                    best_quick_score = -1
+                    for idx in candidate_indices:
+                        quick_score = fuzzy_score(src_n, target_normalized[idx])
+                        if quick_score > best_quick_score:
+                            best_quick_score = quick_score
+                            best_idx = idx
+                            if best_quick_score == 100:
+                                break
+
+                    if best_idx >= 0:
+                        best_target_norm = target_normalized[best_idx]
+                        guard_ok = _slm_lexical_guard_passes(src_n, best_target_norm)
+                        if guard_ok and best_quick_score >= adaptive_accept_score:
+                            pseudo_slm = max(-1.0, min(1.0, (best_quick_score / 50.0) - 1.0))
+                            fast_path_match_map[src_n] = {
+                                "source_normalized": src_n,
+                                "slm_query_normalized": src_n,
+                                "matched_name": target_originals[best_idx],
+                                "score": best_quick_score,
+                                "slm_score": pseudo_slm,
+                                "slm_raw_score": pseudo_slm,
+                                "slm_guard_passed": True,
+                                "slm_stage": "fast",
+                                "is_match": True,
+                            }
+                            continue
+
+                    unresolved_sources.append(src_n)
+                else:
+                    required_target_indices.update(candidate_indices)
+
+            if adaptive_mode:
+                for src_n in unresolved_sources:
+                    candidate_indices = candidate_map.get(src_n)
+                    if candidate_indices:
+                        required_target_indices.update(candidate_indices)
 
             if required_target_indices:
                 required_index_list = sorted(required_target_indices)
@@ -1294,11 +1349,18 @@ def match_names(
                 }
             else:
                 required_target_embeddings = torch.empty(
-                    (0, source_embeddings.shape[1]),
-                    device=source_embeddings.device,
+                    (0, 0),
+                    device=torch.device("cpu"),
                 )
                 required_index_to_pos = {}
                 candidate_pos_map = {}
+
+            if unresolved_sources:
+                unresolved_embeddings = embed_many(unresolved_sources)
+                source_embedding_map = {
+                    name: unresolved_embeddings[idx]
+                    for idx, name in enumerate(unresolved_sources)
+                }
 
         for src, src_n, src_query_n in zip(src_series, src_norm, src_slm_query):
             if src_n not in best_cache:
@@ -1312,8 +1374,15 @@ def match_names(
                         "slm_score": 1.0,
                         "slm_raw_score": 1.0,
                         "slm_guard_passed": True,
+                        "slm_stage": "exact",
                         "is_match": True,
                     }
+                    results.append({"source_name": src, **best_cache[src_n]})
+                    continue
+
+                adaptive_fast = fast_path_match_map.get(src_query_n)
+                if adaptive_fast is not None:
+                    best_cache[src_n] = adaptive_fast
                     results.append({"source_name": src, **best_cache[src_n]})
                     continue
 
@@ -1333,7 +1402,10 @@ def match_names(
                         best_target_norm = target_normalized[best_idx]
                 else:
                     candidate_indices = candidate_map.get(src_query_n, all_indices)
-                    src_embedding = source_embedding_map[src_query_n]
+                    src_embedding = source_embedding_map.get(src_query_n)
+                    if src_embedding is None:
+                        src_embedding = embed_many([src_query_n])[0]
+                        source_embedding_map[src_query_n] = src_embedding
                     if candidate_indices:
                         candidate_positions = candidate_pos_map.get(src_query_n)
                         if candidate_positions is None:
@@ -1361,6 +1433,7 @@ def match_names(
                     "slm_score": best_slm_score if is_final_match else 0.0,
                     "slm_raw_score": best_slm_score,
                     "slm_guard_passed": guard_ok,
+                    "slm_stage": "deep",
                     "is_match": is_final_match,
                 }
 

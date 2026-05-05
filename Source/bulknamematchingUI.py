@@ -75,6 +75,7 @@ METHOD_KEY_MAP = {
     "LNCCLT Match": "levenshtein",
     "AINCCLT Match": "ai_advanced",
     "SLM Match": "slm",
+    "SLM Adaptive Match": "slm_adaptive",
 }
 
 # ── Page header ──────────────────────────────────────────────────────────────

@@ -1343,9 +1343,16 @@ def match_names(
                 required_index_to_pos = {
                     idx: pos for pos, idx in enumerate(required_index_list)
                 }
+                # In adaptive mode only unresolved sources need a position map;
+                # fast-path names have indices that were never added to
+                # required_target_indices and would cause a KeyError.
+                _pos_map_names = (
+                    set(unresolved_sources) if adaptive_mode else set(candidate_map.keys())
+                )
                 candidate_pos_map = {
                     src_n: [required_index_to_pos[idx] for idx in idx_list]
                     for src_n, idx_list in candidate_map.items()
+                    if src_n in _pos_map_names
                 }
             else:
                 required_target_embeddings = torch.empty(

@@ -15,6 +15,13 @@ def read_source_file(path: str) -> pd.DataFrame:
     return pd.read_excel(path)
 
 
+def read_source_columns(path: str) -> list[str]:
+    """Read only column headers from a CSV/XLSX file."""
+    if path.lower().endswith(".csv"):
+        return pd.read_csv(path, nrows=0).columns.tolist()
+    return pd.read_excel(path, nrows=0).columns.tolist()
+
+
 def list_source_files(folder: str) -> list[str]:
     """Return sorted list of CSV/XLSX filenames in a folder (excludes temp files)."""
     if not os.path.isdir(folder):
@@ -34,6 +41,22 @@ def to_excel_bytes(df: pd.DataFrame) -> bytes:
     return buf.getvalue()
 
 
+def build_target_location_lookup(
+    target_df: pd.DataFrame,
+    tgt_name_col: str,
+    tgt_loc_col: Optional[str],
+) -> dict[str, str]:
+    """Build target name -> location map once and reuse across bulk files."""
+    if not tgt_loc_col or tgt_loc_col not in target_df.columns:
+        return {}
+    return (
+        target_df.dropna(subset=[tgt_name_col])
+        .drop_duplicates(subset=[tgt_name_col])
+        .set_index(tgt_name_col)[tgt_loc_col]
+        .to_dict()
+    )
+
+
 def build_output_dataframe(
     source_df: pd.DataFrame,
     match_df: pd.DataFrame,
@@ -42,6 +65,7 @@ def build_output_dataframe(
     target_df: pd.DataFrame,
     tgt_name_col: str,
     tgt_loc_col: Optional[str],
+    target_loc_lookup: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Merge match results back into the source DataFrame:
@@ -52,14 +76,11 @@ def build_output_dataframe(
     out = source_df.copy()
 
     # Build location lookup from reference file
-    loc_lookup: dict[str, str] = {}
-    if tgt_loc_col and tgt_loc_col in target_df.columns:
-        loc_lookup = (
-            target_df.dropna(subset=[tgt_name_col])
-            .drop_duplicates(subset=[tgt_name_col])
-            .set_index(tgt_name_col)[tgt_loc_col]
-            .to_dict()
-        )
+    loc_lookup: dict[str, str] = target_loc_lookup or build_target_location_lookup(
+        target_df,
+        tgt_name_col,
+        tgt_loc_col,
+    )
 
     matched_names = match_df["matched_name"].tolist()
 
@@ -98,6 +119,8 @@ def process_single_file(
     fuzzy_threshold: int = 75,
     lev_max_distance: int = 2,
     lev_engine: str = "auto",
+    target_names: Optional[list[str]] = None,
+    target_loc_lookup: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Load a single source file, run name matching against target_df,
@@ -114,7 +137,10 @@ def process_single_file(
         )
 
     src_names = source_df[src_name_col].fillna("").astype(str).str.strip().tolist()
-    tgt_names = target_df[tgt_name_col].fillna("").astype(str).str.strip().tolist()
+    if target_names is None:
+        tgt_names = target_df[tgt_name_col].fillna("").astype(str).str.strip().tolist()
+    else:
+        tgt_names = target_names
 
     match_df = match_names(
         src_names,
@@ -133,4 +159,5 @@ def process_single_file(
         target_df,
         tgt_name_col,
         tgt_loc_col,
+        target_loc_lookup=target_loc_lookup,
     )

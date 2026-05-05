@@ -770,6 +770,50 @@ if sidebar_menu == "SLM":
     st.stop()
 
 if sidebar_menu == "Bulk Name Matching":
+    with st.sidebar:
+        st.divider()
+        st.header("Matching Settings")
+        st.caption("Configure matching and provide data.")
+
+        slm_health = _slm_health_status()
+        slm_available, slm_unavailable_reason = _slm_matching_available()
+
+        with st.expander("Matching settings", expanded=True):
+            _bulk_method_opts = [
+                "ENCCLT Match",
+                "FNCCLT Match",
+                "SNCCLT Match",
+                "JNCCLT Match",
+                "LNCCLT Match",
+                "AINCCLT Match",
+            ]
+            if slm_available:
+                _bulk_method_opts.append("SLM Match")
+
+            _bulk_method_sel = st.selectbox(
+                "Method",
+                _bulk_method_opts,
+                index=1,
+                key="bulk_method",
+            )
+            if not slm_available and slm_unavailable_reason:
+                st.caption(slm_unavailable_reason)
+
+            if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match"}:
+                st.slider("Fuzzy threshold", 0, 100, 75, 1, key="bulk_threshold")
+            if _bulk_method_sel == "LNCCLT Match":
+                st.slider("Levenshtein max distance", 0, 10, 2, 1, key="bulk_lev_distance")
+                st.selectbox(
+                    "Levenshtein engine",
+                    ["Auto", "RapidFuzz", "Python"],
+                    key="bulk_lev_engine",
+                    help="Auto uses RapidFuzz when available, otherwise Python fallback.",
+                )
+
+        with st.expander("Advanced", expanded=False):
+            st.caption(f"Loaded: `{_clean_display_path(__file__)}`")
+            st.caption(f"mtime: `{_file_mtime_iso(__file__)}`")
+
     runpy.run_path(os.path.join(BASE_DIR, "bulknamematchingUI.py"), run_name="__main__")
     st.stop()
 

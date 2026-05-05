@@ -13,12 +13,58 @@ _WORKSPACE_ROOT = os.path.dirname(os.path.dirname(__file__))
 if _WORKSPACE_ROOT not in sys.path:
     sys.path.insert(0, _WORKSPACE_ROOT)
 
-from Source.bulknamematching import (
-    list_source_files,
-    read_source_file,
-    to_excel_bytes,
-    process_single_file,
-)
+try:
+    from Source.bulknamematching import (
+        build_target_location_lookup,
+        list_source_files,
+        read_source_columns,
+        read_source_file,
+        to_excel_bytes,
+        process_single_file,
+    )
+except ImportError:
+    # Compatibility path for older module versions loaded from duplicate worktrees.
+    from Source.bulknamematching import (
+        list_source_files,
+        read_source_file,
+        to_excel_bytes,
+        process_single_file,
+    )
+
+    def read_source_columns(path: str) -> list[str]:
+        if path.lower().endswith(".csv"):
+            return pd.read_csv(path, nrows=0).columns.tolist()
+        return pd.read_excel(path, nrows=0).columns.tolist()
+
+    def build_target_location_lookup(
+        target_df: pd.DataFrame,
+        tgt_name_col: str,
+        tgt_loc_col: str | None,
+    ) -> dict[str, str]:
+        if not tgt_loc_col or tgt_loc_col not in target_df.columns:
+            return {}
+        return (
+            target_df.dropna(subset=[tgt_name_col])
+            .drop_duplicates(subset=[tgt_name_col])
+            .set_index(tgt_name_col)[tgt_loc_col]
+            .to_dict()
+        )
+
+
+@st.cache_data(show_spinner=False)
+def _read_uploaded_columns(file_name: str, file_bytes: bytes) -> list[str]:
+    raw = BytesIO(file_bytes)
+    if file_name.lower().endswith(".csv"):
+        return pd.read_csv(raw, nrows=0).columns.tolist()
+    return pd.read_excel(raw, nrows=0).columns.tolist()
+
+
+@st.cache_data(show_spinner=False)
+def _read_uploaded_full_df(file_name: str, file_bytes: bytes) -> pd.DataFrame:
+    raw = BytesIO(file_bytes)
+    if file_name.lower().endswith(".csv"):
+        return pd.read_csv(raw)
+    return pd.read_excel(raw)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 METHOD_KEY_MAP = {
@@ -28,6 +74,7 @@ METHOD_KEY_MAP = {
     "JNCCLT Match": "jaro_winkler",
     "LNCCLT Match": "levenshtein",
     "AINCCLT Match": "ai_advanced",
+    "SLM Match": "slm",
 }
 
 # ── Page header ──────────────────────────────────────────────────────────────
@@ -54,22 +101,45 @@ st.markdown(
 )
 
 # ── 1. File Configuration ────────────────────────────────────────────────────
+def _normalise_folder_path(raw: str) -> str:
+    """Normalise a user-supplied folder path for Windows and cross-platform use."""
+    try:
+        p = raw.strip().strip("\"'").strip()
+        if not p:
+            return ""
+        p = os.path.expanduser(os.path.expandvars(p))
+        p = p.replace("/", os.sep).replace("\\\\", "\\")
+        if len(p) == 2 and p[1] == ":":
+            p = p + os.sep
+        return os.path.normpath(p)
+    except Exception:
+        return raw.strip()
+
+
 st.markdown("### 1 · File Configuration")
 conf_c1, conf_c2 = st.columns(2, gap="large")
 with conf_c1:
-    source_folder: str = st.text_input(
+    _src_raw = st.text_input(
         "Source Folder Path",
-        placeholder="e.g. C:/data/source_files",
-        help="Folder containing the CSV / XLSX source files to be matched.",
+        placeholder=r"e.g. C:\Users\me\source_files",
+        help=r"Full path to the folder containing CSV / XLSX source files. Example: C:\Users\me\source_files",
         key="bulk_source_folder",
-    ).strip()
+    )
+    source_folder: str = _normalise_folder_path(_src_raw)
+    if _src_raw.strip():
+        st.caption(f"📂 Path received: `{_src_raw.strip()}` → resolved: `{source_folder}` → exists: `{os.path.isdir(source_folder)}`")
+    else:
+        st.caption("Enter the full path to your source folder above.")
 with conf_c2:
-    output_folder: str = st.text_input(
+    _out_raw = st.text_input(
         "Matched Output Folder",
-        placeholder="e.g. C:/data/matched_files",
-        help="Folder where the enriched output files will be saved. Created if it does not exist.",
+        placeholder=r"e.g. C:\Users\me\matched_files",
+        help=r"Full path where output files will be saved. Created if it does not exist.",
         key="bulk_output_folder",
-    ).strip()
+    )
+    output_folder: str = _normalise_folder_path(_out_raw)
+    if output_folder:
+        st.caption(f"📁 Resolved: `{output_folder}`")
 
 target_file = st.file_uploader(
     "**Target (Reference) File**",
@@ -78,32 +148,31 @@ target_file = st.file_uploader(
     help="The reference list that source names will be matched against.",
 )
 
-# Load target DataFrame
+# Load target columns only (fast path for UI rendering)
 target_df: pd.DataFrame | None = None
+target_cols: list[str] = []
 if target_file is not None:
     try:
-        raw = BytesIO(target_file.getvalue())
-        fn = target_file.name.lower()
-        target_df = pd.read_csv(raw) if fn.endswith(".csv") else pd.read_excel(raw)
+        target_bytes = target_file.getvalue()
+        target_cols = _read_uploaded_columns(target_file.name, target_bytes)
     except Exception as exc:
         st.error(f"Could not read target file: {exc}")
 
 # ── Resolve source file list & preview first file for column selection ────────
 source_files: list[str] = []
-first_source_df: pd.DataFrame | None = None
+first_source_cols: list[str] = []
 
 if source_folder:
     if os.path.isdir(source_folder):
         source_files = list_source_files(source_folder)
         if source_files:
             try:
-                first_source_df = read_source_file(
+                first_source_cols = read_source_columns(
                     os.path.join(source_folder, source_files[0])
                 )
             except Exception:
-                first_source_df = None
-    else:
-        st.warning(f"Source folder not found: `{source_folder}`")
+                first_source_cols = []
+    # warning is already shown as a caption inline above
 
 # ── 2. Choose Columns ────────────────────────────────────────────────────────
 st.markdown("### 2 · Choose Columns")
@@ -121,8 +190,8 @@ tgt_loc_col: str | None = None
 
 with col_src:
     st.markdown("**Source File Columns**")
-    if first_source_df is not None:
-        src_cols = first_source_df.columns.tolist()
+    if first_source_cols:
+        src_cols = first_source_cols
         # Smart default: prefer 'full_name', 'name', 'company_name', else first col
         _name_defaults = [c for c in ["full_name", "name", "company_name"] if c in src_cols]
         src_name_default = src_cols.index(_name_defaults[0]) if _name_defaults else 0
@@ -162,8 +231,8 @@ with col_src:
 
 with col_tgt:
     st.markdown("**Target (Reference) File Columns**")
-    if target_df is not None:
-        tgt_cols = target_df.columns.tolist()
+    if target_cols:
+        tgt_cols = target_cols
         _tgt_name_defaults = [
             c for c in ["name_in_system", "name", "full_name", "company_name"] if c in tgt_cols
         ]
@@ -204,33 +273,29 @@ with col_tgt:
         ).strip()
         tgt_loc_col = _tgt_loc_txt or None
 
-# ── 3. Matching Settings ─────────────────────────────────────────────────────
-st.markdown("### 3 · Matching Settings")
-ms_c1, ms_c2, ms_c3 = st.columns(3, gap="small")
-with ms_c1:
-    bulk_method_label = st.selectbox(
-        "Method",
-        list(METHOD_KEY_MAP.keys()),
-        index=1,  # FNCCLT by default
-        key="bulk_method",
-    )
-with ms_c2:
-    bulk_threshold = st.slider("Fuzzy threshold", 0, 100, 75, 1, key="bulk_threshold")
-with ms_c3:
-    bulk_lev_distance = st.slider(
-        "Levenshtein max distance", 0, 10, 2, 1, key="bulk_lev_distance"
-    )
+# ── Match settings are controlled from the left panel ──────────────────────
+bulk_method_label = str(st.session_state.get("bulk_method", "FNCCLT Match"))
+bulk_threshold = int(st.session_state.get("bulk_threshold", 75))
+bulk_lev_distance = int(st.session_state.get("bulk_lev_distance", 2))
+bulk_lev_engine = str(st.session_state.get("bulk_lev_engine", "Auto")).lower()
+bulk_method_key = METHOD_KEY_MAP.get(bulk_method_label, "fuzzy")
 
-bulk_method_key = METHOD_KEY_MAP[bulk_method_label]
-
-# ── 4. Source Files Table + Start Button ─────────────────────────────────────
-st.markdown("### 4 · Source Files")
+# ── 3. Source Files Table + Start Button ─────────────────────────────────────
+st.markdown("### 3 · Source Files")
 
 bulk_results: dict = st.session_state.get("bulk_results", {})
+if "bulk_run_count" not in st.session_state:
+    st.session_state["bulk_run_count"] = 0
+if "bulk_last_run_status" not in st.session_state:
+    st.session_state["bulk_last_run_status"] = "Idle"
+if "bulk_last_run_missing" not in st.session_state:
+    st.session_state["bulk_last_run_missing"] = []
 
 if not source_files:
-    if source_folder:
-        st.info("No CSV / XLSX files found in the source folder.")
+    if source_folder and os.path.isdir(source_folder):
+        st.info(f"No CSV or XLSX files found in `{source_folder}`.")
+    elif source_folder:
+        st.warning(f"Folder not found: `{source_folder}` — check the path above.")
     else:
         st.info("Enter a **Source Folder Path** above to list files.")
 else:
@@ -281,20 +346,36 @@ else:
     # Validation guard
     _can_run = bool(
         source_files
-        and target_df is not None
+        and target_file is not None
+        and target_cols
         and src_name_col
         and tgt_name_col
     )
     _missing: list[str] = []
-    if target_df is None:
+    if target_file is None:
         _missing.append("target file")
+    elif not target_cols:
+        _missing.append("readable target columns")
     if not src_name_col:
         _missing.append("source name column")
     if not tgt_name_col:
         _missing.append("target name column")
 
+    st.caption(
+        "Ready check: "
+        + (
+            "ready to run."
+            if not _missing
+            else f"missing {', '.join(_missing)}."
+        )
+    )
     if _missing:
-        st.caption(f"⚠ Cannot start — missing: {', '.join(_missing)}.")
+        st.warning(f"Cannot start yet. Please provide: {', '.join(_missing)}.")
+
+    st.caption(
+        f"Run status: {st.session_state.get('bulk_last_run_status', 'Idle')} | "
+        f"Runs this session: {int(st.session_state.get('bulk_run_count', 0))}"
+    )
 
     start_btn = st.button(
         "▶  Start Bulk Processing",
@@ -305,6 +386,31 @@ else:
     )
 
     if start_btn and _can_run:
+        st.session_state["bulk_run_count"] = int(st.session_state.get("bulk_run_count", 0)) + 1
+        st.session_state["bulk_last_run_status"] = "Running"
+        st.session_state["bulk_last_run_missing"] = []
+        st.info(
+            f"Bulk processing started for {len(source_files)} file(s) using method '{bulk_method_label}'."
+        )
+
+        # Load full target data lazily only when the run actually starts.
+        try:
+            target_bytes = target_file.getvalue() if target_file is not None else b""
+            target_df = _read_uploaded_full_df(target_file.name, target_bytes)
+        except Exception as exc:
+            st.session_state["bulk_last_run_status"] = f"Failed: {exc}"
+            st.error(f"Could not read target file for processing: {exc}")
+            st.stop()
+
+        target_names_prepared = (
+            target_df[tgt_name_col].fillna("").astype(str).str.strip().tolist()
+        )
+        target_loc_lookup = build_target_location_lookup(
+            target_df,
+            tgt_name_col,
+            tgt_loc_col,
+        )
+
         # Create output folder if specified
         if output_folder:
             os.makedirs(output_folder, exist_ok=True)
@@ -332,7 +438,9 @@ else:
                     method=bulk_method_key,
                     fuzzy_threshold=int(bulk_threshold),
                     lev_max_distance=int(bulk_lev_distance),
-                    lev_engine="auto",
+                    lev_engine=bulk_lev_engine,
+                    target_names=target_names_prepared,
+                    target_loc_lookup=target_loc_lookup,
                 )
 
                 out_bytes = to_excel_bytes(out_df)
@@ -356,6 +464,11 @@ else:
                 }
 
         progress_bar.progress(1.0, text=f"Done — {len(source_files)} file(s) processed.")
+        done_count = sum(1 for r in new_results.values() if r.get("status") == "done")
+        error_count = sum(1 for r in new_results.values() if r.get("status") == "error")
+        st.session_state["bulk_last_run_status"] = (
+            f"Completed: {done_count} success, {error_count} error"
+        )
         st.session_state["bulk_results"] = new_results
         st.rerun()
 

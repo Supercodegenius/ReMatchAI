@@ -58,8 +58,22 @@ def resolve_model_dir() -> str:
 def load_model():
     model_dir = resolve_model_dir()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    encoder = AutoModel.from_pretrained(model_dir).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_dir,
+        local_files_only=True,
+        use_fast=True,
+    )
+    try:
+        encoder = AutoModel.from_pretrained(
+            model_dir,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        ).to(device)
+    except Exception:
+        encoder = AutoModel.from_pretrained(
+            model_dir,
+            local_files_only=True,
+        ).to(device)
     encoder.eval()
     return tokenizer, encoder, device, model_dir
 

@@ -66,6 +66,7 @@ MatchMethod = Literal[
     "soundex",
     "ai_advanced",
     "slm",
+    "vector_similarity",
     "slm_adaptive",
 ]
 LevenshteinEngine = Literal["auto", "rapidfuzz", "python"]
@@ -548,8 +549,22 @@ def _load_slm_runtime():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Force local model resolution to avoid remote hub checks during cold start.
-    tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
-    encoder = AutoModel.from_pretrained(model_dir, local_files_only=True).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_dir,
+        local_files_only=True,
+        use_fast=True,
+    )
+    try:
+        encoder = AutoModel.from_pretrained(
+            model_dir,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        ).to(device)
+    except Exception:
+        encoder = AutoModel.from_pretrained(
+            model_dir,
+            local_files_only=True,
+        ).to(device)
     encoder.eval()
     embedding_cache: dict[str, torch.Tensor] = {}
 
@@ -559,55 +574,76 @@ def _load_slm_runtime():
         counts = torch.clamp(mask.sum(dim=1), min=1e-9)
         return summed / counts
 
+    def _ensure_embeddings(texts: list[str], batch_size: int = 128) -> int:
+        missing_texts = [text for text in dict.fromkeys(texts) if text not in embedding_cache]
+        if not missing_texts:
+            return 0
+
+        with torch.inference_mode():
+            for start in range(0, len(missing_texts), batch_size):
+                chunk = missing_texts[start:start + batch_size]
+                encoded = tokenizer(
+                    chunk,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                    max_length=64,
+                )
+                encoded = {k: v.to(device) for k, v in encoded.items()}
+                autocast_enabled = device == "cuda"
+                with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=autocast_enabled):
+                    output = encoder(**encoded)
+                    pooled = _mean_pool(output.last_hidden_state, encoded["attention_mask"])
+                normalized = F.normalize(pooled.float(), p=2, dim=1).detach().cpu()
+                for i, text in enumerate(chunk):
+                    embedding_cache[text] = normalized[i]
+
+        return len(missing_texts)
+
     def _embed_many(texts: list[str], batch_size: int = 128):
         if not texts:
             hidden = encoder.config.hidden_size
             return torch.empty((0, hidden), device=device)
 
-        missing_texts = [text for text in dict.fromkeys(texts) if text not in embedding_cache]
-        if missing_texts:
-            with torch.inference_mode():
-                for start in range(0, len(missing_texts), batch_size):
-                    chunk = missing_texts[start:start + batch_size]
-                    encoded = tokenizer(
-                        chunk,
-                        return_tensors="pt",
-                        padding=True,
-                        truncation=True,
-                        max_length=64,
-                    )
-                    encoded = {k: v.to(device) for k, v in encoded.items()}
-                    autocast_enabled = device == "cuda"
-                    with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=autocast_enabled):
-                        output = encoder(**encoded)
-                        pooled = _mean_pool(output.last_hidden_state, encoded["attention_mask"])
-                    normalized = F.normalize(pooled.float(), p=2, dim=1).detach().cpu()
-                    for i, text in enumerate(chunk):
-                        embedding_cache[text] = normalized[i]
+        _ensure_embeddings(texts, batch_size=batch_size)
 
         vectors = [embedding_cache[text] for text in texts]
         if not vectors:
             hidden = encoder.config.hidden_size
             return torch.empty((0, hidden), device=device)
-        return torch.stack(vectors, dim=0).to(device)
+        return torch.stack(vectors, dim=0).to(device, non_blocking=(device == "cuda"))
+
+    def _embed_many_numpy(texts: list[str], batch_size: int = 128):
+        if not texts:
+            hidden = encoder.config.hidden_size
+            return torch.empty((0, hidden), dtype=torch.float32).numpy()
+
+        _ensure_embeddings(texts, batch_size=batch_size)
+        vectors = [embedding_cache[text] for text in texts]
+        if not vectors:
+            hidden = encoder.config.hidden_size
+            return torch.empty((0, hidden), dtype=torch.float32).numpy()
+        return torch.stack(vectors, dim=0).numpy().astype("float32", copy=False)
 
     return {
         "torch": torch,
         "embed_many": _embed_many,
+        "embed_many_numpy": _embed_many_numpy,
+        "prime_embeddings": _ensure_embeddings,
         "faiss": faiss,
     }
 
 
 def warmup_slm_runtime() -> None:
-    runtime = _load_slm_runtime()
-    embed_many = runtime["embed_many"]
-    embed_many(["slm warmup"])
+    _load_slm_runtime()
 
 
 def prime_slm_match_runtime(
     target_names: Iterable[str] | None = None,
     source_names: Iterable[str] | None = None,
-) -> dict[str, int]:
+    max_target_to_embed: int | None = 12000,
+    max_source_to_embed: int = 256,
+) -> dict[str, int | bool]:
     """
     Prime SLM runtime caches so first user-visible matching run is faster.
 
@@ -616,6 +652,7 @@ def prime_slm_match_runtime(
     """
     runtime = _load_slm_runtime()
     embed_many = runtime["embed_many"]
+    prime_embeddings = runtime.get("prime_embeddings")
 
     def _normalize_unique(values: Iterable[str] | None) -> list[str]:
         if values is None:
@@ -633,19 +670,35 @@ def prime_slm_match_runtime(
     target_normalized = _normalize_unique(target_names)
     source_normalized = _normalize_unique(source_names)
 
-    warmup_texts = ["slm warmup"]
-    warmup_texts.extend(target_normalized)
-    warmup_texts.extend(source_normalized)
+    if max_target_to_embed is None:
+        primed_targets = target_normalized
+    else:
+        target_cap = max(0, int(max_target_to_embed))
+        primed_targets = target_normalized[:target_cap]
+
+    source_cap = max(0, int(max_source_to_embed))
+    primed_sources = source_normalized[:source_cap]
+
+    warmup_texts = list(dict.fromkeys(["slm warmup", *primed_targets, *primed_sources]))
 
     if warmup_texts:
-        embed_many(warmup_texts)
+        if callable(prime_embeddings):
+            prime_embeddings(warmup_texts)
+        else:
+            embed_many(warmup_texts)
 
+    ann_built = False
     if target_normalized:
-        _build_slm_ann_assets(tuple(target_normalized))
+        if max_target_to_embed is None or len(target_normalized) <= int(max_target_to_embed):
+            _build_slm_ann_assets(tuple(target_normalized))
+            ann_built = True
 
     return {
         "target_count": len(target_normalized),
         "source_count": len(source_normalized),
+        "primed_target_count": len(primed_targets),
+        "primed_source_count": len(primed_sources),
+        "ann_built": ann_built,
     }
 
 
@@ -660,14 +713,18 @@ def _build_slm_ann_assets(target_normalized_tuple: tuple[str, ...]) -> dict[str,
         return None
 
     embed_many = runtime["embed_many"]
+    embed_many_numpy = runtime.get("embed_many_numpy")
     try:
-        target_embeddings = (
-            embed_many(list(target_normalized_tuple))
-            .detach()
-            .cpu()
-            .numpy()
-            .astype("float32", copy=False)
-        )
+        if callable(embed_many_numpy):
+            target_embeddings = embed_many_numpy(list(target_normalized_tuple))
+        else:
+            target_embeddings = (
+                embed_many(list(target_normalized_tuple))
+                .detach()
+                .cpu()
+                .numpy()
+                .astype("float32", copy=False)
+            )
         ann_index = faiss.IndexFlatIP(target_embeddings.shape[1])
         ann_index.add(target_embeddings)
         return {
@@ -1219,7 +1276,7 @@ def match_names(
             results.append({"source_name": src, **best_cache[src_n]})
         return pd.DataFrame(results)
 
-    if method in {"slm", "slm_adaptive"}:
+    if method in {"slm", "vector_similarity", "slm_adaptive"}:
         slm_runtime = _load_slm_runtime()
         torch = slm_runtime["torch"]
         embed_many = slm_runtime["embed_many"]

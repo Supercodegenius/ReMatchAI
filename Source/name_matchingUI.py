@@ -628,6 +628,25 @@ def _compose_match_values(
     return combined_values.str.replace(r"\s+", " ", regex=True).str.strip()
 
 
+def _fast_series_signature(values: pd.Series, sample_size: int = 256) -> str:
+    total = len(values)
+    if total == 0:
+        return "0:0"
+
+    if total > sample_size:
+        head_size = sample_size // 2
+        tail_size = sample_size - head_size
+        sample = pd.concat(
+            [values.head(head_size), values.tail(tail_size)],
+            ignore_index=True,
+        )
+    else:
+        sample = values
+
+    sample_hash = int(pd.util.hash_pandas_object(sample, index=False).sum())
+    return f"{total}:{sample_hash}"
+
+
 @st.cache_data(show_spinner=False)
 def run_matching(
     left_values: tuple[str, ...],
@@ -789,7 +808,6 @@ if sidebar_menu == "Bulk Name Matching":
             ]
             if slm_available:
                 _bulk_method_opts.append("SLM Match")
-                _bulk_method_opts.append("SLM Adaptive Match")
 
             _bulk_method_sel = st.selectbox(
                 "Method",
@@ -800,7 +818,7 @@ if sidebar_menu == "Bulk Name Matching":
             if not slm_available and slm_unavailable_reason:
                 st.caption(slm_unavailable_reason)
 
-            if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "SLM Adaptive Match"}:
+            if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "Vector Similarity (SLM)", "SLM Adaptive Match"}:
                 st.slider("Fuzzy threshold", 0, 100, 75, 1, key="bulk_threshold")
             if _bulk_method_sel == "LNCCLT Match":
                 st.slider("Levenshtein max distance", 0, 10, 2, 1, key="bulk_lev_distance")
@@ -839,7 +857,6 @@ with st.sidebar:
         ]
         if slm_available:
             method_options.append("SLM Match")
-            method_options.append("SLM Adaptive Match")
 
         method = st.selectbox(
             "Method",
@@ -851,7 +868,7 @@ with st.sidebar:
         threshold = 75
         lev_max_distance = 2
         lev_engine = "auto"
-        if method in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "SLM Adaptive Match"}:
+        if method in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "Vector Similarity (SLM)", "SLM Adaptive Match"}:
             threshold = st.slider("Fuzzy threshold", 0, 100, 75, 1)
         if method == "LNCCLT Match":
             lev_max_distance = st.slider("Levenshtein max distance", 0, 10, 2, 1)
@@ -892,13 +909,14 @@ method_key = {
     "LNCCLT Match": "levenshtein",
     "AINCCLT Match": "ai_advanced",
     "SLM Match": "slm",
+    "Vector Similarity (SLM)": "vector_similarity",
     "SLM Adaptive Match": "slm_adaptive",
 }[method]
 
 if "slm_bulk_warmed" not in st.session_state:
     st.session_state["slm_bulk_warmed"] = False
 
-if method_key == "slm" and not st.session_state["slm_bulk_warmed"]:
+if method_key in {"slm", "vector_similarity", "slm_adaptive"} and not st.session_state["slm_bulk_warmed"]:
     with st.spinner("Preparing SLM model for faster matching..."):
         try:
             from Source import namematching as nm
@@ -913,11 +931,7 @@ if method_key == "slm" and not st.session_state["slm_bulk_warmed"]:
                     raise AttributeError(
                         "warmup_slm_runtime is unavailable and _load_slm_runtime fallback is not present"
                     )
-                runtime = runtime_loader()
-                embed_many = runtime.get("embed_many") if isinstance(runtime, dict) else None
-                if not callable(embed_many):
-                    raise AttributeError("SLM runtime did not expose an embed_many callable")
-                embed_many(["slm warmup"])
+                runtime_loader()
             st.session_state["slm_bulk_warmed"] = True
         except Exception as exc:
             if isinstance(exc, ModuleNotFoundError):
@@ -1438,29 +1452,6 @@ right_names = _compose_match_values(right_df, right_name_col, right_extra_cols)
 if "slm_prime_signature" not in st.session_state:
     st.session_state["slm_prime_signature"] = ""
 
-if method_key == "slm":
-    left_hash = int(pd.util.hash_pandas_object(left_names, index=False).sum()) if len(left_names) else 0
-    right_hash = int(pd.util.hash_pandas_object(right_names, index=False).sum()) if len(right_names) else 0
-    slm_prime_signature = f"{len(left_names)}:{len(right_names)}:{left_hash}:{right_hash}"
-    if st.session_state["slm_prime_signature"] != slm_prime_signature:
-        with st.spinner("Priming SLM cache for faster first run..."):
-            try:
-                from Source import namematching as nm
-
-                prime_fn = getattr(nm, "prime_slm_match_runtime", None)
-                if callable(prime_fn):
-                    prime_fn(
-                        target_names=right_names.tolist(),
-                        source_names=left_names.tolist(),
-                    )
-                else:
-                    warmup_fn = getattr(nm, "warmup_slm_runtime", None)
-                    if callable(warmup_fn):
-                        warmup_fn()
-                st.session_state["slm_prime_signature"] = slm_prime_signature
-            except Exception as exc:
-                st.caption(f"SLM pre-prime skipped: {exc}")
-
 run_header_col, run_button_col = st.columns(2, gap="small")
 with run_header_col:
     back_to_landing = st.button(
@@ -1483,6 +1474,33 @@ if back_to_landing:
 
 has_results = "result_df" in st.session_state
 if run_now:
+    if method_key in {"slm", "vector_similarity", "slm_adaptive"}:
+        left_sig = _fast_series_signature(left_names)
+        right_sig = _fast_series_signature(right_names)
+        slm_prime_signature = f"{left_sig}:{right_sig}"
+        if st.session_state["slm_prime_signature"] != slm_prime_signature:
+            with st.spinner("Priming SLM cache for this dataset..."):
+                try:
+                    from Source import namematching as nm
+
+                    prime_fn = getattr(nm, "prime_slm_match_runtime", None)
+                    if callable(prime_fn):
+                        prime_target_cap = min(len(right_names), 8000)
+                        prime_source_cap = min(len(left_names), 128)
+                        prime_fn(
+                            target_names=right_names.tolist(),
+                            source_names=left_names.tolist(),
+                            max_target_to_embed=prime_target_cap,
+                            max_source_to_embed=prime_source_cap,
+                        )
+                    else:
+                        warmup_fn = getattr(nm, "warmup_slm_runtime", None)
+                        if callable(warmup_fn):
+                            warmup_fn()
+                    st.session_state["slm_prime_signature"] = slm_prime_signature
+                except Exception as exc:
+                    st.caption(f"SLM pre-prime skipped: {exc}")
+
     with st.spinner("Matching names..."):
         _use_staged = (
             include_location
@@ -1832,6 +1850,132 @@ st.link_button(
 )
 
 # ---------------------------------------------------------------------------
+# Row-level enrichment dialog helpers
+# ---------------------------------------------------------------------------
+
+def _detect_country_col(columns: tuple[str, ...]) -> str | None:
+    """Return the best country/location column found in columns, or None."""
+    priority = [
+        "country", "nation", "location", "city", "region",
+        "state", "territory", "geography", "locale",
+    ]
+    cols_lower = {str(c).lower(): c for c in columns}
+    for kw in priority:
+        if kw in cols_lower:
+            return cols_lower[kw]
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def _top_country_candidates(
+    source_value: str, target_values: tuple[str, ...], top_k: int = 10
+) -> list[str]:
+    """Top-k unique location/country values from reference scored against source_value."""
+    from Source.namematching import fuzzy_score, normalize_name
+
+    unique_vals: list[str] = list(
+        dict.fromkeys(str(v).strip() for v in target_values if str(v).strip())
+    )
+    if not unique_vals:
+        return []
+    if not str(source_value or "").strip():
+        return unique_vals[:top_k]
+    src_n = normalize_name(str(source_value))
+    scored = [(fuzzy_score(src_n, normalize_name(v)), v) for v in unique_vals]
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [v for _, v in scored[:top_k]]
+
+
+@st.dialog("Enrich Unmatched Record", width="small")
+def _row_enrich_dialog(
+    source_name: str,
+    source_country_value: str,
+    name_candidates: list[str],
+    country_candidates: list[str],
+    country_col_label: str,
+    right_df_cols: list[str],
+    use_demo_files: bool,
+    right_name_col: str,
+    country_col: str | None,
+    row_original_index: int,
+) -> None:
+    """Modal dialog: RLHF trains the SLM; Enrichment adds to the reference file."""
+    st.markdown(f"**Unmatched source:** `{source_name}`")
+    st.caption(
+        "**RLHF** — confirms this pair as a match, updates the SLM feedback store and refreshes results.  \n"
+        "**Enrichment** — appends the chosen name + location as a new row in the reference data."
+    )
+
+    name_col_ui, country_col_ui = st.columns(2)
+    with name_col_ui:
+        chosen_name = st.selectbox(
+            "Top 10 name candidates",
+            options=name_candidates if name_candidates else [""],
+            key="erd_name",
+        )
+    with country_col_ui:
+        chosen_country = st.selectbox(
+            f"Top 10 {country_col_label} candidates",
+            options=[""] + [c for c in country_candidates if c][:10],
+            key="erd_country",
+        )
+
+    st.markdown("---")
+    act_c1, act_c2 = st.columns(2)
+    with act_c1:
+        if st.button("RLHF", type="primary", use_container_width=True, key="erd_rlhf"):
+            if chosen_name:
+                try:
+                    from Source.namematching import save_match_feedback as _smf
+                    _smf(
+                        [{"source_name": source_name, "matched_name": chosen_name, "is_correct": True}],
+                        FEEDBACK_DB_PATH,
+                    )
+                    _upd_df = st.session_state.get("result_df")
+                    if isinstance(_upd_df, pd.DataFrame) and row_original_index in _upd_df.index:
+                        _upd_df = _upd_df.copy()
+                        _upd_df.at[row_original_index, "matched_name"] = chosen_name
+                        _upd_df.at[row_original_index, "score"] = _relink_score(source_name, chosen_name)
+                        _upd_df.at[row_original_index, "is_match"] = True
+                        if "feedback_override" in _upd_df.columns:
+                            _upd_df.at[row_original_index, "feedback_override"] = "rlhf_confirmed"
+                        st.session_state["result_df"] = _upd_df
+                    st.success(f"RLHF saved: '{source_name}' → '{chosen_name}'. Refreshing…")
+                    st.rerun()
+                except Exception as _exc_rlhf:
+                    st.error(f"RLHF error: {_exc_rlhf}")
+            else:
+                st.warning("Select a name candidate first.")
+    with act_c2:
+        if st.button("Enrichment", type="secondary", use_container_width=True, key="erd_enrichment"):
+            _effective_name = str(chosen_name or "").strip() or str(source_name or "").strip()
+            _effective_country = str(chosen_country or "").strip() or str(source_country_value or "").strip()
+            if not _effective_name:
+                st.warning("Could not enrich because source name is blank.")
+            else:
+                _new_ref_row: dict[str, object] = {col: "" for col in right_df_cols}
+                _new_ref_row[right_name_col] = _effective_name
+                if country_col and country_col in _new_ref_row:
+                    _new_ref_row[country_col] = _effective_country
+                _enr_list = list(st.session_state.get("_enrichment_rows", []))
+                _enr_list.append(_new_ref_row)
+                st.session_state["_enrichment_rows"] = _enr_list
+                if use_demo_files:
+                    try:
+                        _demo_ref = pd.read_csv(DEMO_TARGET_PATH)
+                        _demo_ref = pd.concat(
+                            [_demo_ref, pd.DataFrame([_new_ref_row])], ignore_index=True
+                        )
+                        _demo_ref.to_csv(DEMO_TARGET_PATH, index=False)
+                        st.success(f"Reference file updated with '{_effective_name}'.")
+                    except Exception as _exc_enr:
+                        st.error(f"Could not write reference file: {_exc_enr}")
+                else:
+                    st.success(f"'{_effective_name}' queued — download the enriched rows below the feedback panel.")
+                st.rerun()
+
+
+# ---------------------------------------------------------------------------
 # Self-learning feedback section
 # ---------------------------------------------------------------------------
 st.markdown("---")
@@ -1840,41 +1984,109 @@ with st.expander("Confirm Matches — Self-Learning Feedback", expanded=False):
         "Mark each result as correct or incorrect. "
         "Saved decisions are applied automatically on every future run."
     )
-    _fb_view = result_df_view[[c for c in ["source_name", "matched_name", "score", "is_match"] if c in result_df_view.columns]].copy()
+    _left_country_col = left_location_col
+    if not _left_country_col and left_df is not None:
+        _left_country_col = _detect_country_col(tuple(left_df.columns.tolist()))
+
+    _right_country_col = right_location_col
+    if not _right_country_col and right_df is not None:
+        _right_country_col = _detect_country_col(tuple(right_df.columns.tolist()))
+
+    _feedback_columns = [
+        "source_name",
+        "source_location",
+        "source_country",
+        "matched_name",
+        "matched_location",
+        "matched_country",
+        "score",
+        "is_match",
+    ]
+    _fb_view = result_df_view[[c for c in _feedback_columns if c in result_df_view.columns]].copy()
+
+    if "source_location" not in _fb_view.columns and _left_country_col and _left_country_col in left_df.columns:
+        _fb_view["source_location"] = left_df[_left_country_col].reindex(_fb_view.index).fillna("").astype(str)
+
+    if "matched_location" not in _fb_view.columns and _right_country_col and _right_country_col in right_df.columns:
+        _right_country_map = (
+            right_df.drop_duplicates(subset=[right_name_col])
+            .set_index(right_name_col)[_right_country_col]
+            .to_dict()
+        )
+        _fb_view["matched_location"] = _fb_view["matched_name"].map(_right_country_map).fillna("")
+
     _fb_view["is_correct"] = _fb_view.get("is_match", False)
-    _col_cfg = {
-        "source_name": st.column_config.TextColumn("Source Name", disabled=True),
-        "matched_name": st.column_config.TextColumn("Matched Name", disabled=True),
-        "score": st.column_config.NumberColumn("Score", disabled=True),
-        "is_match": st.column_config.CheckboxColumn("Auto Match", disabled=True),
-        "is_correct": st.column_config.CheckboxColumn("✓ Correct?", help="Check to confirm this match, uncheck to reject it"),
-    }
-    _edited_fb = st.data_editor(
-        _fb_view,
-        hide_index=True,
+
+    # ── Row-click enrichment dialog (active only when "Show unmatched rows" is on) ──
+    if show_unmatched_rows:
+        st.markdown(
+            "**Click any row** to open the RLHF / Enrichment dialog for that record.",
+            help="RLHF trains the SLM; Enrichment appends the record to the reference data.",
+        )
+        _fb_sel_event = st.dataframe(
+            _fb_view[[c for c in _feedback_columns if c in _fb_view.columns]],
+            use_container_width=True,
+            height=300,
+            key="feedback_unmatched_selector",
+            on_select="rerun",
+            selection_mode="single-row",
+        )
+        _sel_rows = getattr(getattr(_fb_sel_event, "selection", None), "rows", [])
+        if _sel_rows:
+            _sel_pos = int(_sel_rows[0])
+            _fb_sel_row = _fb_view.iloc[_sel_pos]
+            _sel_source_name = str(_fb_sel_row.get("source_name", ""))
+            _sel_orig_idx = int(_fb_view.index[_sel_pos])
+            _sel_source_country = str(
+                _fb_sel_row.get("source_location", "")
+                or _fb_sel_row.get("source_country", "")
+                or ""
+            ).strip()
+            if (
+                not _sel_source_country
+                and _left_country_col is not None
+                and _left_country_col in left_df.columns
+                and _sel_orig_idx in left_df.index
+            ):
+                _sel_source_country = str(left_df.at[_sel_orig_idx, _left_country_col] or "").strip()
+            _name_cands = _top_relink_candidates(
+                _sel_source_name, tuple(right_names.tolist()), top_k=10
+            )
+            _country_col = right_location_col if right_location_col in right_df.columns else _detect_country_col(tuple(right_df.columns.tolist()))
+            if _country_col:
+                _country_vals = tuple(
+                    right_df[_country_col].dropna().astype(str).unique().tolist()
+                )
+                _country_query = _sel_source_country or _sel_source_name
+                _country_cands = _top_country_candidates(_country_query, _country_vals, top_k=10)
+            else:
+                _country_cands = []
+            _row_enrich_dialog(
+                source_name=_sel_source_name,
+                source_country_value=_sel_source_country,
+                name_candidates=_name_cands,
+                country_candidates=_country_cands,
+                country_col_label=_country_col or "Country",
+                right_df_cols=right_df.columns.tolist(),
+                use_demo_files=use_demo_files,
+                right_name_col=right_name_col,
+                country_col=_country_col,
+                row_original_index=_sel_orig_idx,
+            )
+        st.divider()
+
+# ── Enrichment download for uploaded (non-demo) reference files ───────────────
+_pending_enr = st.session_state.get("_enrichment_rows", [])
+if _pending_enr and not use_demo_files:
+    _enr_df = pd.DataFrame(_pending_enr)
+    st.download_button(
+        "⬇ Download Enriched Reference Rows",
+        data=_enr_df.to_csv(index=False).encode("utf-8"),
+        file_name="enriched_reference_rows.csv",
+        mime="text/csv",
         use_container_width=True,
-        height=340,
-        key="feedback_editor",
-        column_config=_col_cfg,
-        disabled=[c for c in _col_cfg if c != "is_correct"],
+        key="download_enriched_reference",
     )
-    if st.button("Save Feedback", type="primary", use_container_width=True):
-        try:
-            from Source.namematching import save_match_feedback
-            _fb_rows = [
-                {
-                    "source_name": str(row.get("source_name", "")),
-                    "matched_name": str(row.get("matched_name", "")),
-                    "is_correct": bool(row.get("is_correct", False)),
-                }
-                for _, row in _edited_fb.iterrows()
-                if str(row.get("matched_name", "")).strip()
-            ]
-            _saved = save_match_feedback(_fb_rows, FEEDBACK_DB_PATH)
-            st.success(f"Saved {_saved} feedback entries. Results will update on next run.")
-            st.rerun()
-        except Exception as _exc:
-            st.error(f"Could not save feedback: {_exc}")
 
 st.markdown('<div class="nm-chat-shell">', unsafe_allow_html=True)
 st.markdown(

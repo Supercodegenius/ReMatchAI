@@ -1,4 +1,4 @@
-﻿# Build with AI: AI-Powered Name Matching
+# Build with AI: AI-Powered Name Matching
 # Dashboards with Streamlit
 # Name Matching UI Building with Streamlit and Python
 
@@ -349,23 +349,24 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    """
-    <div class="nm-hero">
-      <div class="nm-hero-title-row">
-        <h1 style="margin:0;">AI Powered Name Matching</h1>
-        <div class="nm-powered-by">By BrainCal Tech Team <a href="https://braincal.com" target="_blank" rel="noopener noreferrer">https://braincal.com</a></div>
-      </div>
-      <p>Enterprise-grade name matching with ENCCLT, FNCCLT, SNCCLT, JNCCLT, LNCCLT, AINCCLT, and SLM methods.</p>
-      <div class="nm-chip-row">
-        <span class="nm-chip">Operational Data Quality</span>
-        <span class="nm-chip">Customer Record Matching</span>
-        <span class="nm-chip">AI Assistant Enabled</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+if not st.session_state.get("_from_main_matcher_ui", False):
+        st.markdown(
+                """
+                <div class="nm-hero">
+                    <div class="nm-hero-title-row">
+                        <h1 style="margin:0;">AI Powered Name Matching</h1>
+                        <div class="nm-powered-by">By BrainCal Tech Team <a href="https://braincal.com" target="_blank" rel="noopener noreferrer">https://braincal.com</a></div>
+                    </div>
+                    <p>Enterprise-grade name matching with ENCCLT, FNCCLT, SNCCLT, JNCCLT, LNCCLT, AINCCLT, and SLM methods.</p>
+                    <div class="nm-chip-row">
+                        <span class="nm-chip">Operational Data Quality</span>
+                        <span class="nm-chip">Customer Record Matching</span>
+                        <span class="nm-chip">AI Assistant Enabled</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+        )
 
 BASE_DIR = os.path.dirname(__file__)
 DEMO_SOURCE_PATH = os.path.join(BASE_DIR, "demo_data", "source_names.csv")
@@ -384,8 +385,8 @@ CONTROL_REGISTRY = [
     {"id": "explain_mismatch_button", "type": "button", "label": "Explain mismatch"},
     {"id": "show_data_previews_checkbox", "type": "checkbox", "label": "Show data previews"},
     {"id": "show_only_matches_checkbox", "type": "checkbox", "label": "Show only matched rows"},
-    {"id": "include_location_checkbox", "type": "checkbox", "label": "Include Location"},
-    {"id": "include_industry_checkbox", "type": "checkbox", "label": "Include Industry"},
+    {"id": "include_location_checkbox", "type": "checkbox", "label": "Include Schedule"},
+    {"id": "include_industry_checkbox", "type": "checkbox", "label": "Include Airline Code"},
     {"id": "include_app_context_checkbox", "type": "checkbox", "label": "Include current app context"},
 ]
 
@@ -497,7 +498,7 @@ def _slm_health_status() -> dict[str, object]:
         return health
 
     try:
-        from Source import namematching as nm
+        from Source import name_matchingaviation as nm
     except Exception as exc:
         health["backend_import_error"] = str(exc)
         health["reason"] = f"SLM backend import failed: {exc}"
@@ -568,6 +569,7 @@ def _slm_trace_explanation(name_a: str, name_b: str, threshold_str: str) -> str:
 
     try:
         threshold = float(threshold_str) if threshold_str else 0.75
+        # SLM threshold is stored as 0-100 in the UI slider but used as 0-1 internally
         if threshold > 1.0:
             threshold = threshold / 100.0
     except ValueError:
@@ -654,6 +656,7 @@ def _generate_slm_explanation(user_question: str, app_context: str = "") -> str:
     current_method = _parse_ctx_value(app_context, "Selected method")
     current_threshold = _parse_ctx_value(app_context, "Fuzzy threshold")
     rows_in_result = _parse_ctx_value(app_context, "Rows in result")
+    method_key_val = _parse_ctx_value(app_context, "Method key")
 
     if "how many" in question_lower or "count" in question_lower or "summary" in question_lower:
         if result_df is not None and not result_df.empty:
@@ -679,6 +682,7 @@ def _generate_slm_explanation(user_question: str, app_context: str = "") -> str:
             count = len(unmatched_df)
             if count == 0:
                 return f"All `{len(result_df)}` rows matched successfully with method **{current_method}** at threshold `{current_threshold}`."
+            # Show first few unmatched source names
             src_col = next((c for c in result_df.columns if "source" in c.lower() or c.lower() in ("name_a", "name a")), None)
             if src_col:
                 samples = unmatched_df[src_col].dropna().head(10).tolist()
@@ -702,9 +706,11 @@ def _generate_slm_explanation(user_question: str, app_context: str = "") -> str:
             "| Use Case | Recommended Method |\n|---|---|\n"
             "| Exact name matching | `Exact` |\n"
             "| Slight typos / abbreviations | `SLM` or `Fuzzy` |\n"
-            "| Phonetic variants | `Soundex` |\n"
+            "| Phonetic variants (e.g. colour/color) | `Soundex` |\n"
+            "| Aviation/ICAO code expansion | `SLM Adaptive` |\n"
             "| Highest semantic accuracy | `SLM` or `Vector Similarity` |\n\n"
-            "The **SLM** method uses your locally trained transformer — best for messy, real-world data."
+            "The **SLM** method uses your locally trained transformer to embed names and compare "
+            "them as vectors — best for messy, real-world data with abbreviations and word-order variations."
             + (f"\n\n**App context:**\n{app_context}" if app_context else "")
         )
 
@@ -725,21 +731,24 @@ def _generate_slm_explanation(user_question: str, app_context: str = "") -> str:
             "| `0.85 – 1.00` | Very strict — only near-identical names match |\n"
             "| `0.70 – 0.84` | Balanced — catches common variations |\n"
             "| `0.55 – 0.69` | Lenient — higher recall, more false positives |\n\n"
-            "Ask: *\"why does \\\"Name A\\\" match \\\"Name B\\\"?\"* to score a specific pair live."
+            "**Tip:** Score specific borderline pairs by asking: "
+            "*\"why does \\\"Name A\\\" match \\\"Name B\\\"?\"* to see the exact SLM score."
             + score_dist
         )
 
     if "explain" in question_lower or "how does" in question_lower or "how it works" in question_lower:
         return (
             "### How the SLM Matcher Works\n\n"
-            "1. **Normalisation** — Legal suffixes, punctuation, and accents are stripped.\n"
-            "2. **Tokenisation** — Each normalised name is split into subword tokens (max 64).\n"
-            "3. **Embedding** — Your fine-tuned transformer encodes tokens into a dense vector.\n"
-            "4. **Mean Pooling** — Token vectors are averaged to produce a sentence vector.\n"
-            "5. **Cosine Similarity** — Dot product of unit-normalised vectors → score in `[-1, 1]`.\n"
-            "6. **Lexical Guard** — Seq ratio < 0.45 AND zero shared tokens → forced NO MATCH.\n"
+            "1. **Normalisation** — Legal suffixes (Ltd, GmbH, Plc…), punctuation, and accents are stripped. "
+            "Aviation codes are expanded to full names.\n"
+            "2. **Tokenisation** — Each normalised name is split into subword tokens (max 64 tokens).\n"
+            "3. **Embedding** — Your fine-tuned transformer encodes each token sequence into a dense vector.\n"
+            "4. **Mean Pooling** — Token vectors are averaged (attention-mask-weighted) to produce a single sentence vector.\n"
+            "5. **Cosine Similarity** — The two unit-normalised vectors are dot-producted to get a score in `[-1, 1]`.\n"
+            "6. **Lexical Guard** — If sequence ratio < 0.45 AND zero shared tokens, the pair is forced to NO MATCH "
+            "regardless of embedding score (prevents false positives).\n"
             "7. **Threshold Decision** — Score ≥ threshold → **MATCH**, else **NO MATCH**.\n\n"
-            "Ask: *why does \"Name A\" match \"Name B\"?* to score a pair live."
+            "To score a specific pair, ask: *why does \"Name A\" match \"Name B\"?*"
             + (f"\n\n**Current config:** {app_context}" if app_context else "")
         )
 
@@ -747,15 +756,17 @@ def _generate_slm_explanation(user_question: str, app_context: str = "") -> str:
         ctx_threshold = f"current threshold `{current_threshold}`" if current_threshold else "your threshold"
         return (
             f"**Troubleshooting mismatches** (method: **{current_method or 'unknown'}**, {ctx_threshold}):\n\n"
-            "1. **Score too low** — Lower the threshold. Ask the assistant to score a specific pair.\n"
-            "2. **Lexical guard triggered** — Names share zero words and differ greatly in characters.\n"
-            "3. **Normalisation mismatch** — Unusual suffixes or special characters may not normalise.\n"
-            "4. **Wrong method** — Phonetic variants need `Soundex`; structural variations need `SLM`.\n\n"
-            "**Quick debug:** Ask *\"why does \\\"Name A\\\" not match \\\"Name B\\\"?\"*"
+            "1. **Score too low** — Lower the threshold slightly. Ask the assistant to score the specific pair to see exactly where it falls.\n"
+            "2. **Lexical guard triggered** — If names share zero words and have very different character patterns, "
+            "the guard blocks the match. Consider adding the shared context (e.g. country, IATA code) as extra columns.\n"
+            "3. **Normalisation mismatch** — Unusual legal suffixes or special characters may not normalise correctly. "
+            "Check the 'Score Pair' trace in the SLM Tester tab.\n"
+            "4. **Wrong method** — Phonetic variants may need `Soundex`; structural variations need `SLM`.\n\n"
+            "**Quick debug:** Ask *\"why does \\\"Name A\\\" not match \\\"Name B\\\"?\"* and the SLM will score it live."
             + (f"\n\n**Rows in current result:** {rows_in_result}" if rows_in_result else "")
         )
 
-    # Fallback: contextual
+    # Fallback: still contextual based on what's loaded
     loaded_info = ""
     if result_df is not None:
         total = len(result_df)
@@ -920,7 +931,7 @@ def run_matching(
     levenshtein_max_distance: int,
     levenshtein_engine: str,
 ) -> pd.DataFrame:
-    from Source.namematching import match_names
+    from Source.name_matchingaviation import match_names
 
     return match_names(
         list(left_values),
@@ -946,7 +957,7 @@ def run_matching_staged(
 ) -> pd.DataFrame:
     """Two-stage matching: filter reference rows by location first, then match on name within those candidates."""
     from collections import defaultdict
-    from Source.namematching import match_names, normalize_name, fuzzy_score
+    from Source.name_matchingaviation import match_names, normalize_name, fuzzy_score
     try:
         from rapidfuzz import fuzz as rf_fuzz
         from rapidfuzz import process as rf_process
@@ -1018,48 +1029,13 @@ def run_matching_staged(
     return pd.DataFrame(result_rows)
 
 
-with st.sidebar:
-    st.markdown('<div class="nm-sidebar-menu">', unsafe_allow_html=True)
-    menu_options = {
-        "Data Upload": "📥 Data Upload",
-        "Name Matching": "🔎 Name Matching",
-        "Bulk Name Matching": "📦 Bulk Name Matching",
-        "AirlineMatching": "✈️ Airline Matching",
-        "Tower Matching": "🗼 Tower Matching",
-        "Admin": "⚙️ Admin",
-        "SLM": "🤖 SLM",
-    }
-    disabled_menu_items = {"Data Upload", "SLM", "Admin"}
-    if "sidebar_menu" not in st.session_state:
-        st.session_state["sidebar_menu"] = "Name Matching"
-    elif st.session_state["sidebar_menu"] == "ReLink":
-        st.session_state["sidebar_menu"] = "AirlineMatching"
-    elif st.session_state["sidebar_menu"] in disabled_menu_items:
-        st.session_state["sidebar_menu"] = "Name Matching"
-    for key, label in menu_options.items():
-        is_active = st.session_state["sidebar_menu"] == key
-        if st.button(
-            label,
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-            key=f"menu_btn_{key}",
-            disabled=key in disabled_menu_items,
-        ):
-            st.session_state["sidebar_menu"] = key
-            st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-    sidebar_menu = st.session_state["sidebar_menu"]
+# Sidebar menu is rendered by name_matchingUI.py before delegating to aviation.
+if "sidebar_menu" not in st.session_state:
+    st.session_state["sidebar_menu"] = "AirlineMatching"
+sidebar_menu = st.session_state.get("sidebar_menu", "AirlineMatching")
 
 if sidebar_menu == "SLM":
     runpy.run_path(os.path.join(BASE_DIR, "slm_ui.py"), run_name="__main__")
-    st.stop()
-
-if sidebar_menu == "AirlineMatching":
-    st.session_state["_from_main_matcher_ui"] = True
-    try:
-        runpy.run_path(os.path.join(BASE_DIR, "name_matchingaviationUI.py"), run_name="__main__")
-    finally:
-        st.session_state.pop("_from_main_matcher_ui", None)
     st.stop()
 
 if sidebar_menu == "Bulk Name Matching":
@@ -1193,7 +1169,7 @@ if "slm_bulk_warmed" not in st.session_state:
 if method_key in {"slm", "vector_similarity", "slm_adaptive"} and not st.session_state["slm_bulk_warmed"]:
     with st.spinner("Preparing SLM model for faster matching..."):
         try:
-            from Source import namematching as nm
+            from Source import name_matchingaviation as nm
 
             warmup_fn = getattr(nm, "warmup_slm_runtime", None)
             if callable(warmup_fn):
@@ -1628,16 +1604,16 @@ with choose_col_header:
     st.subheader("Choose columns")
 with include_loc_col:
     include_location = st.checkbox(
-        "Include Location",
+        "Include Schedule",
         value=False,
-        help="Append the location column to the primary name before matching when available.",
+        help="Append the schedule column to the primary name before matching when available.",
         disabled=not _is_control_enabled("include_location_checkbox"),
     )
 with include_ind_col:
     include_industry = st.checkbox(
-        "Include Industry",
+        "Include Airline Code",
         value=False,
-        help="Append the industry column to the primary name before matching when available.",
+        help="Append the airline code column to the primary name before matching when available.",
         disabled=not _is_control_enabled("include_industry_checkbox"),
     )
 
@@ -1663,12 +1639,12 @@ if include_location:
                 left_location_options.index("location") if "location" in left_location_options else 0
             )
             left_location_col = st.selectbox(
-                "Source location column",
+                "Source schedule column",
                 options=left_location_options,
                 index=left_location_default,
             )
         else:
-            st.caption("No source columns available for location selection.")
+            st.caption("No source columns available for schedule selection.")
     with location_right:
         right_location_options = [c for c in right_df.columns.tolist() if c != right_name_col]
         if right_location_options:
@@ -1676,12 +1652,12 @@ if include_location:
                 right_location_options.index("location") if "location" in right_location_options else 0
             )
             right_location_col = st.selectbox(
-                "Target location column",
+                "Target schedule column",
                 options=right_location_options,
                 index=right_location_default,
             )
         else:
-            st.caption("No target columns available for location selection.")
+            st.caption("No target columns available for schedule selection.")
 
 if include_industry:
     industry_left, industry_right = st.columns(2, gap="large")
@@ -1692,12 +1668,12 @@ if include_industry:
                 left_industry_options.index("industry") if "industry" in left_industry_options else 0
             )
             left_industry_col = st.selectbox(
-                "Source industry column",
+                "Source airline code column",
                 options=left_industry_options,
                 index=left_industry_default,
             )
         else:
-            st.caption("No source columns available for industry selection.")
+            st.caption("No source columns available for airline code selection.")
     with industry_right:
         right_industry_options = [c for c in right_df.columns.tolist() if c != right_name_col]
         if right_industry_options:
@@ -1705,12 +1681,12 @@ if include_industry:
                 right_industry_options.index("industry") if "industry" in right_industry_options else 0
             )
             right_industry_col = st.selectbox(
-                "Target industry column",
+                "Target airline code column",
                 options=right_industry_options,
                 index=right_industry_default,
             )
         else:
-            st.caption("No target columns available for industry selection.")
+            st.caption("No target columns available for airline code selection.")
 
 left_extra_cols: list[str] = []
 right_extra_cols: list[str] = []
@@ -1736,7 +1712,7 @@ with run_header_col:
     )
 with run_button_col:
     run_now = st.button(
-        "Run Name Matching",
+        "Run Airline Matching",
         type="primary",
         use_container_width=True,
         disabled=not _is_control_enabled("run_name_matching_button"),
@@ -1755,7 +1731,7 @@ if run_now:
         if st.session_state["slm_prime_signature"] != slm_prime_signature:
             with st.spinner("Priming SLM cache for this dataset..."):
                 try:
-                    from Source import namematching as nm
+                    from Source import name_matchingaviation as nm
 
                     prime_fn = getattr(nm, "prime_slm_match_runtime", None)
                     if callable(prime_fn):
@@ -1817,7 +1793,7 @@ if full_result_df is None:
 
 # Apply self-learning feedback overrides
 try:
-    from Source.namematching import load_match_feedback, apply_match_feedback
+    from Source.name_matchingaviation import load_match_feedback, apply_match_feedback
     _fb = load_match_feedback(FEEDBACK_DB_PATH)
     if _fb["approved"] or _fb["rejected"]:
         full_result_df = apply_match_feedback(full_result_df, _fb)
@@ -1894,7 +1870,7 @@ def _prepare_result_for_display(
 
 @st.cache_data(show_spinner=False)
 def _top_relink_candidates(source_value: str, target_values: tuple[str, ...], top_k: int = 10) -> list[str]:
-    from Source.namematching import fuzzy_score, normalize_name
+    from Source.name_matchingaviation import fuzzy_score, normalize_name, token_set_score
 
     source_text = str(source_value or "")
     source_norm = normalize_name(source_text)
@@ -1914,17 +1890,28 @@ def _top_relink_candidates(source_value: str, target_values: tuple[str, ...], to
     if not source_norm:
         return unique_targets[:top_k]
 
-    scored: list[tuple[int, str]] = []
+    scored: list[tuple[tuple[int, int, int], str]] = []
+    source_tokens = set(source_norm.split())
+    
     for target in unique_targets:
-        score = fuzzy_score(source_norm, normalize_name(target))
-        scored.append((int(score), target))
+        target_norm = normalize_name(target)
+        target_tokens = set(target_norm.split())
+        
+        # Hybrid scoring: prefix match + token overlap + character similarity
+        prefix_bonus = 50 if source_norm.startswith(target_norm) else 0  # Exact prefix match
+        token_match = 40 if target_tokens.issubset(source_tokens) else 0  # All target tokens in source
+        fuzzy = fuzzy_score(source_norm, target_norm)
+        
+        # Use prefix_bonus as primary sort key, then token_match, then fuzzy
+        composite_score = (prefix_bonus + token_match + fuzzy // 2, token_match, fuzzy)
+        scored.append((composite_score, target))
 
-    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    scored.sort(key=lambda item: item[0], reverse=True)
     return [name for _, name in scored[:top_k]]
 
 
 def _relink_score(source_value: str, target_value: str) -> int:
-    from Source.namematching import fuzzy_score, normalize_name
+    from Source.name_matchingaviation import fuzzy_score, normalize_name
 
     if not str(target_value or "").strip():
         return 0
@@ -2027,7 +2014,7 @@ def _top_country_candidates(
     source_value: str, target_values: tuple[str, ...], top_k: int = 10
 ) -> list[str]:
     """Top-k unique location/country values from reference scored against source_value."""
-    from Source.namematching import fuzzy_score, normalize_name
+    from Source.name_matchingaviation import fuzzy_score, normalize_name
 
     unique_vals: list[str] = list(
         dict.fromkeys(str(v).strip() for v in target_values if str(v).strip())
@@ -2058,8 +2045,8 @@ def _row_enrich_dialog(
     """Modal dialog: RLHF trains the SLM; Enrichment adds to the reference file."""
     st.markdown(f"**Unmatched source:** `{source_name}`")
     st.caption(
-        "**RLHF** — confirms this pair as a match, updates the SLM feedback store and refreshes results.  \n"
-        "**Enrichment** — appends the chosen name + location as a new row in the reference data."
+        "**RLHF** � confirms this pair as a match, updates the SLM feedback store and refreshes results.  \n"
+        "**Enrichment** � appends the chosen name + location as a new row in the reference data."
     )
 
     name_col_ui, country_col_ui = st.columns(2)
@@ -2082,7 +2069,7 @@ def _row_enrich_dialog(
         if st.button("RLHF", type="primary", use_container_width=True, key="erd_rlhf"):
             if chosen_name:
                 try:
-                    from Source.namematching import save_match_feedback as _smf
+                    from Source.name_matchingaviation import save_match_feedback as _smf
                     _smf(
                         [{"source_name": source_name, "matched_name": chosen_name, "is_correct": True}],
                         FEEDBACK_DB_PATH,
@@ -2096,7 +2083,7 @@ def _row_enrich_dialog(
                         if "feedback_override" in _upd_df.columns:
                             _upd_df.at[row_original_index, "feedback_override"] = "rlhf_confirmed"
                         st.session_state["result_df"] = _upd_df
-                    st.success(f"RLHF saved: '{source_name}' → '{chosen_name}'. Refreshing…")
+                    st.success(f"RLHF saved: '{source_name}' ? '{chosen_name}'. Refreshing�")
                     st.rerun()
                 except Exception as _exc_rlhf:
                     st.error(f"RLHF error: {_exc_rlhf}")
@@ -2127,7 +2114,7 @@ def _row_enrich_dialog(
                     except Exception as _exc_enr:
                         st.error(f"Could not write reference file: {_exc_enr}")
                 else:
-                    st.success(f"'{_effective_name}' queued — download the enriched rows below the feedback panel.")
+                    st.success(f"'{_effective_name}' queued � download the enriched rows below the feedback panel.")
                 st.rerun()
 
 
@@ -2135,7 +2122,7 @@ def _row_enrich_dialog(
 # Self-learning feedback section
 # ---------------------------------------------------------------------------
 st.markdown("---")
-with st.expander("Confirm Matches — Self-Learning Feedback", expanded=False):
+with st.expander("Confirm Matches � Self-Learning Feedback", expanded=False):
     st.caption(
         "Mark each result as correct or incorrect. "
         "Saved decisions are applied automatically on every future run."
@@ -2173,7 +2160,7 @@ with st.expander("Confirm Matches — Self-Learning Feedback", expanded=False):
 
     _fb_view["is_correct"] = _fb_view.get("is_match", False)
 
-    # ── Row-click enrichment dialog (active only when "Show unmatched rows" is on) ──
+    # -- Row-click enrichment dialog (active only when "Show unmatched rows" is on) --
     if show_unmatched_rows:
         st.markdown(
             "**Click any row** to open the RLHF / Enrichment dialog for that record.",
@@ -2231,12 +2218,12 @@ with st.expander("Confirm Matches — Self-Learning Feedback", expanded=False):
             )
         st.divider()
 
-# ── Enrichment download for uploaded (non-demo) reference files ───────────────
+# -- Enrichment download for uploaded (non-demo) reference files ---------------
 _pending_enr = st.session_state.get("_enrichment_rows", [])
 if _pending_enr and not use_demo_files:
     _enr_df = pd.DataFrame(_pending_enr)
     st.download_button(
-        "⬇ Download Enriched Reference Rows",
+        "? Download Enriched Reference Rows",
         data=_enr_df.to_csv(index=False).encode("utf-8"),
         file_name="enriched_reference_rows.csv",
         mime="text/csv",
@@ -2352,4 +2339,5 @@ st.markdown(
     '<div class="nm-footer">&copy; 2026 braincal.com. All rights reserved</div>',
     unsafe_allow_html=True,
 )
+
 

@@ -75,6 +75,53 @@ st.markdown(
                 display: none !important;
             }
 
+            /* Keep collapsed sidebar expander visible on the light header. */
+            div[data-testid="collapsedControl"] {
+                z-index: 1000 !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            div[data-testid="collapsedControl"] button,
+            button[aria-label="Show sidebar"],
+            button[title="View sidebar"] {
+                opacity: 1 !important;
+                visibility: visible !important;
+                color: #12356f !important;
+                border: 1px solid rgba(18, 53, 111, 0.35) !important;
+                background: rgba(255, 255, 255, 0.92) !important;
+                border-radius: 0.5rem !important;
+            }
+            div[data-testid="collapsedControl"] svg,
+            button[aria-label="Show sidebar"] svg,
+            button[title="View sidebar"] svg {
+                fill: #12356f !important;
+                stroke: #12356f !important;
+            }
+            button[data-testid="stExpandSidebarButton"] {
+                position: fixed !important;
+                top: 0.55rem !important;
+                left: 0.6rem !important;
+                z-index: 1001 !important;
+                width: 2.2rem !important;
+                height: 2.2rem !important;
+                border-radius: 0.6rem !important;
+                border: 1px solid rgba(18, 53, 111, 0.38) !important;
+                background: rgba(255, 255, 255, 0.96) !important;
+                box-shadow: 0 3px 10px rgba(18, 53, 111, 0.14) !important;
+                color: #12356f !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            button[data-testid="stExpandSidebarButton"] span,
+            button[data-testid="stExpandSidebarButton"] div {
+                color: #12356f !important;
+                font-size: 1.25rem !important;
+                line-height: 1 !important;
+            }
+
       div[data-testid="stAppViewContainer"],
       section.main,
       div[data-testid="stAppViewContainer"] > .main,

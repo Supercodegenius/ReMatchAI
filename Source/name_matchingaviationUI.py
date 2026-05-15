@@ -122,24 +122,6 @@ st.markdown(
                 line-height: 1 !important;
             }
 
-            /* Fallback selectors for Streamlit builds that omit the expand button test id. */
-            header[data-testid="stHeader"] button[kind="header"],
-            header[data-testid="stHeader"] [data-testid="collapsedControl"] button {
-                position: fixed !important;
-                top: 0.55rem !important;
-                left: 0.6rem !important;
-                z-index: 1001 !important;
-                width: 2.2rem !important;
-                height: 2.2rem !important;
-                border-radius: 0.6rem !important;
-                border: 1px solid rgba(18, 53, 111, 0.38) !important;
-                background: rgba(255, 255, 255, 0.96) !important;
-                box-shadow: 0 3px 10px rgba(18, 53, 111, 0.14) !important;
-                color: #12356f !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
-
       div[data-testid="stAppViewContainer"],
       section.main,
       div[data-testid="stAppViewContainer"] > .main,

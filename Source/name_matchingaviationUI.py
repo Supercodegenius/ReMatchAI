@@ -70,6 +70,13 @@ st.markdown(
                 display: block !important;
             }
 
+            /* Remove visible white header strip while keeping header controls available. */
+            header[data-testid="stHeader"] {
+                background: transparent !important;
+                height: 0 !important;
+                border: 0 !important;
+            }
+
             /* Remove Deploy button from header area. */
             button[data-testid="stAppDeployButton"] {
                 display: none !important;
@@ -128,7 +135,7 @@ st.markdown(
       section[data-testid="stMain"],
       div[data-testid="stMain"] {
         margin-top: 0 !important;
-                padding-top: 2.75rem !important;
+                                padding-top: 0.35rem !important;
       }
 
       div[data-testid="stMainBlockContainer"],
@@ -2105,7 +2112,7 @@ def _row_enrich_dialog(
         )
     with country_col_ui:
         chosen_country = st.selectbox(
-            f"Top 10 {country_col_label} candidates",
+            "Top 10 schedule candidates",
             options=[""] + [c for c in country_candidates if c][:10],
             key="erd_country",
         )

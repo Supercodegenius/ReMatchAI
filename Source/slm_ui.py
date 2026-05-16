@@ -8,6 +8,8 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
 
+FAVICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "favicon.png.jpeg")
+
 try:
     from Source.normalise import normalise_name
 except Exception:
@@ -29,7 +31,7 @@ def _safe_set_page_config(**kwargs) -> None:
 
 _safe_set_page_config(
     page_title="SLM Name Matching Tester",
-    page_icon="🧪",
+    page_icon=FAVICON_PATH,
     layout="wide",
 )
 

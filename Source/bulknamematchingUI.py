@@ -8,6 +8,24 @@ import pandas as pd
 import streamlit as st
 from io import BytesIO
 
+FAVICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "favicon.png.jpeg")
+
+
+def _safe_set_page_config(**kwargs) -> None:
+    try:
+        st.set_page_config(**kwargs)
+    except Exception:
+        # Ignore duplicate page config errors when launched from a parent app.
+        pass
+
+
+_safe_set_page_config(
+    page_title="Bulk Name Matching | ReMatch",
+    page_icon=FAVICON_PATH,
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 # Ensure workspace root is on sys.path for Source imports
 _WORKSPACE_ROOT = os.path.dirname(os.path.dirname(__file__))
 if _WORKSPACE_ROOT not in sys.path:

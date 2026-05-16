@@ -20,6 +20,20 @@ Data Scientist
 
 Check out my other courses on [LinkedIn Learning](https://www.linkedin.com/learning/instructors/megan-silvey?u=104).
 
+## Deploy This App (Streamlit Community Cloud)
+
+This repository is already structured for Streamlit Cloud deployment.
+
+1. Push your latest changes to GitHub (branch: `main`).
+2. In Streamlit Community Cloud, click **Create app**.
+3. Select repository: `Supercodegenius/ReMatchAI`.
+4. Set branch to `main`.
+5. Set main file path to `streamlit_app.py`.
+6. In **Advanced settings -> Secrets**, add your keys from a local file like `.streamlit/secrets.example.toml`.
+7. Click **Deploy**.
+
+After first setup, each push to `main` auto-redeploys the app.
+
 
 [0]: # (Replace these placeholder URLs with actual course URLs)
 

@@ -828,6 +828,7 @@ def match_names(
     fuzzy_threshold: int = 75,
     lev_max_distance: int = 2,
     lev_engine: LevenshteinEngine = "auto",
+    feedback: dict | None = None,
 ) -> pd.DataFrame:
     """Return match results for each source name against a target list."""
     import pandas as pd

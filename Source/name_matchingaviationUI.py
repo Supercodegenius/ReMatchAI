@@ -976,6 +976,15 @@ def _fast_series_signature(values: pd.Series, sample_size: int = 256) -> str:
     return f"{total}:{sample_hash}"
 
 
+def _feedback_cache_token(db_path: str = FEEDBACK_DB_PATH) -> str:
+    """Return a stable token that changes whenever feedback DB content changes."""
+    try:
+        stat_result = os.stat(db_path)
+        return f"{int(stat_result.st_mtime_ns)}:{int(stat_result.st_size)}"
+    except OSError:
+        return "0:0"
+
+
 @st.cache_data(show_spinner=False)
 def run_matching(
     left_values: tuple[str, ...],
@@ -984,8 +993,11 @@ def run_matching(
     fuzzy_threshold: int,
     levenshtein_max_distance: int,
     levenshtein_engine: str,
+    feedback_token: str = "",
 ) -> pd.DataFrame:
-    from Source.name_matchingaviation import match_names
+    from Source.name_matchingaviation import load_match_feedback, match_names
+
+    feedback = load_match_feedback(FEEDBACK_DB_PATH)
 
     return match_names(
         list(left_values),
@@ -994,6 +1006,7 @@ def run_matching(
         fuzzy_threshold=fuzzy_threshold,
         lev_max_distance=levenshtein_max_distance,
         lev_engine=levenshtein_engine,
+        feedback=feedback,
     )
 
 
@@ -1007,11 +1020,17 @@ def run_matching_staged(
     fuzzy_threshold: int,
     levenshtein_max_distance: int,
     levenshtein_engine: str,
+    feedback_token: str = "",
     location_threshold: int = 85,
 ) -> pd.DataFrame:
     """Two-stage matching: filter reference rows by location first, then match on name within those candidates."""
     from collections import defaultdict
-    from Source.name_matchingaviation import match_names, normalize_name, fuzzy_score
+    from Source.name_matchingaviation import (
+        load_match_feedback,
+        match_names,
+        normalize_name,
+        fuzzy_score,
+    )
     try:
         from rapidfuzz import fuzz as rf_fuzz
         from rapidfuzz import process as rf_process
@@ -1023,6 +1042,7 @@ def run_matching_staged(
     left_locs_list = list(left_locs)
     right_list = list(right_values)
     right_locs_list = list(right_locs)
+    feedback = load_match_feedback(FEEDBACK_DB_PATH)
 
     right_locs_norm = [normalize_name(loc) for loc in right_locs_list]
     left_locs_norm = [normalize_name(loc) for loc in left_locs_list]
@@ -1076,6 +1096,7 @@ def run_matching_staged(
             fuzzy_threshold=fuzzy_threshold,
             lev_max_distance=levenshtein_max_distance,
             lev_engine=levenshtein_engine,
+            feedback=feedback,
         )
         for row_pos, src_idx in enumerate(src_indices):
             result_rows[src_idx] = sub_df.iloc[row_pos].to_dict()
@@ -1806,6 +1827,7 @@ if run_now:
                     st.caption(f"SLM pre-prime skipped: {exc}")
 
     with st.spinner("Matching names..."):
+        feedback_token = _feedback_cache_token(FEEDBACK_DB_PATH)
         _use_staged = (
             include_location
             and left_location_col is not None
@@ -1823,6 +1845,7 @@ if run_now:
                 int(threshold),
                 int(lev_max_distance),
                 lev_engine,
+                feedback_token,
             )
         else:
             st.session_state["result_df"] = run_matching(
@@ -1832,6 +1855,7 @@ if run_now:
                 int(threshold),
                 int(lev_max_distance),
                 lev_engine,
+                feedback_token,
             )
     st.session_state["scroll_to_top_matches"] = True
     has_results = True

@@ -851,10 +851,31 @@ def _read_demo_csv(path: str, file_mtime: float) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _uploaded_file_signature(uploaded_file) -> str:
+    file_id = getattr(uploaded_file, "file_id", None)
+    return f"{uploaded_file.name}:{getattr(uploaded_file, 'size', 0)}:{file_id}"
+
+
 def read_table(uploaded_file):
     if uploaded_file is None:
         return None
-    return _read_table_from_bytes(uploaded_file.getvalue(), uploaded_file.name)
+
+    cache_key = "_uploaded_table_cache"
+    cache = st.session_state.setdefault(cache_key, {})
+    signature = _uploaded_file_signature(uploaded_file)
+
+    if signature in cache:
+        return cache[signature]
+
+    df = _read_table_from_bytes(uploaded_file.getvalue(), uploaded_file.name)
+    cache[signature] = df
+
+    # Keep cache bounded for long sessions with many uploads.
+    if len(cache) > 10:
+        oldest_key = next(iter(cache))
+        del cache[oldest_key]
+
+    return df
 
 
 def _init_data_upload_db(db_path: str) -> None:

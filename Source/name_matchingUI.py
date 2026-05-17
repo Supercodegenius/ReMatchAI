@@ -1177,7 +1177,7 @@ with st.sidebar:
         "Admin": "⚙️ Admin",
         "SLM": "🤖 SLM",
     }
-    disabled_menu_items = {"Data Upload", "SLM", "Admin"}
+    disabled_menu_items = {"Data Upload", "SLM"}
     if "sidebar_menu" not in st.session_state:
         st.session_state["sidebar_menu"] = "Name Matching"
     elif st.session_state["sidebar_menu"] == "ReLink":
@@ -1717,6 +1717,80 @@ if sidebar_menu == "Admin":
         _save_control_settings(updated_settings)
         st.success(f"Settings saved to `{CONTROL_SETTINGS_XML_PATH}`")
         st.rerun()
+
+    # ------------------------------------------------------------------
+    # Model Health & Telemetry dashboard
+    # ------------------------------------------------------------------
+    st.divider()
+    st.subheader("Model Health & Telemetry")
+
+    _TELEMETRY_DB_PATH = os.path.join(BASE_DIR, "..", "outputs", "slm_telemetry.db")
+
+    try:
+        try:
+            from Source.slm_monitor import get_health_summary as _get_health, get_recent_runs as _get_runs
+        except ImportError:
+            from slm_monitor import get_health_summary as _get_health, get_recent_runs as _get_runs
+        _slm_monitor_ok = True
+    except ImportError:
+        _slm_monitor_ok = False
+
+    if not _slm_monitor_ok:
+        st.warning("slm_monitor module not available — cannot load health data.")
+    else:
+        _health = _get_health(FEEDBACK_DB_PATH, _TELEMETRY_DB_PATH)
+
+        if _health["alerts"]:
+            for _alert in _health["alerts"]:
+                st.error(_alert)
+        else:
+            st.success("All health checks passed.")
+
+        st.caption(f"**Model:** `{_health['model_version']}`")
+
+        st.markdown("**Feedback Quality**")
+        _q = _health["quality"]
+        _qc1, _qc2, _qc3 = st.columns(3)
+        _qc1.metric("Total Labelled", _q["total_labelled"])
+        _qc2.metric("Approved", _q["approved"])
+        _qc3.metric(
+            "Precision",
+            f"{_q['precision']:.0%}" if _q["precision"] is not None else "n/a",
+        )
+
+        st.markdown("**Score Drift (7-day window vs 30-day baseline)**")
+        _d = _health["drift"]
+        if _d.get("insufficient_data"):
+            st.caption(
+                f"Insufficient run history for drift detection "
+                f"(baseline runs: {_d['baseline_runs']}, need ≥ 3)."
+            )
+        else:
+            _dc1, _dc2, _dc3 = st.columns(3)
+            _dc1.metric("Recent Avg Score (7d)", f"{_d['recent_avg']:.1f}")
+            _dc2.metric("Baseline Avg Score (30d)", f"{_d['baseline_avg']:.1f}")
+            _delta_val = _d.get("delta")
+            _dc3.metric(
+                "Score Delta",
+                f"{_delta_val:+.1f}" if _delta_val is not None else "n/a",
+                delta=f"{_delta_val:.1f}" if _delta_val is not None else None,
+            )
+
+        _runs = _get_runs(_TELEMETRY_DB_PATH, limit=20)
+        if _runs:
+            import pandas as _pd_health
+            _runs_df = _pd_health.DataFrame(_runs)[[
+                "ts", "method", "source_count", "matched_count",
+                "avg_score", "inference_ms", "model_version"
+            ]]
+            _runs_df.columns = [
+                "Timestamp", "Method", "Sources", "Matched",
+                "Avg Score", "Inference ms", "Model Version"
+            ]
+            st.markdown("**Recent Inference Runs**")
+            st.dataframe(_runs_df, use_container_width=True, height=280)
+        else:
+            st.caption("No run history yet. Run SLM matching to populate telemetry.")
 
     st.stop()
 

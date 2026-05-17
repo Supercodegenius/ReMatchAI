@@ -1304,6 +1304,8 @@ def match_names(
         return pd.DataFrame(results)
 
     if method in {"slm", "vector_similarity", "slm_adaptive"}:
+        import time as _time
+        _slm_t0 = _time.monotonic()
         slm_runtime = _load_slm_runtime()
         torch = slm_runtime["torch"]
         embed_many = slm_runtime["embed_many"]
@@ -1599,6 +1601,52 @@ def match_names(
                 }
 
             results.append({"source_name": src, **best_cache[src_n]})
+
+        # --- emit telemetry (best-effort, never crashes inference) ---
+        try:
+            import uuid as _uuid
+            from datetime import datetime as _dt, timezone as _tz
+            try:
+                from Source.slm_monitor import log_inference_run as _log_run, get_model_version as _get_mv
+            except ImportError:
+                from slm_monitor import log_inference_run as _log_run, get_model_version as _get_mv
+            _stage_counts: dict[str, int] = {"fast": 0, "exact": 0, "deep": 0, "feedback": 0}
+            for _r in results:
+                _stage = _r.get("slm_stage", "deep")
+                if _stage == "fast":
+                    _stage_counts["fast"] += 1
+                elif _stage == "exact":
+                    _stage_counts["exact"] += 1
+                elif _stage == "feedback_confirmed":
+                    _stage_counts["feedback"] += 1
+                else:
+                    _stage_counts["deep"] += 1
+            _matched = [_r for _r in results if _r.get("is_match")]
+            _avg_score = (
+                sum(_r.get("score", 0) for _r in _matched) / len(_matched)
+                if _matched else 0.0
+            )
+            _telemetry_db = str(
+                Path(__file__).resolve().parent.parent / "outputs" / "slm_telemetry.db"
+            )
+            _log_run(_telemetry_db, {
+                "run_id": str(_uuid.uuid4()),
+                "ts": _dt.now(_tz.utc).isoformat(),
+                "method": method,
+                "source_count": len(results),
+                "matched_count": len(_matched),
+                "avg_score": _avg_score,
+                "feedback_hits": _stage_counts["feedback"],
+                "stage_fast": _stage_counts["fast"],
+                "stage_exact": _stage_counts["exact"],
+                "stage_deep": _stage_counts["deep"],
+                "stage_feedback": _stage_counts["feedback"],
+                "inference_ms": round((_time.monotonic() - _slm_t0) * 1000, 1),
+                "model_version": _get_mv(),
+            })
+        except Exception:
+            pass
+
         return pd.DataFrame(results)
 
     raise ValueError(f"Unknown method: {method}")

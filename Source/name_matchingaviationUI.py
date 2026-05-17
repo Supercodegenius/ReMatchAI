@@ -957,6 +957,58 @@ def _compose_match_values(
     return combined_values.str.replace(r"\s+", " ", regex=True).str.strip()
 
 
+def _normalize_header_token(value: str) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _drop_header_like_rows(
+    df: pd.DataFrame,
+    selected_cols: list[str],
+    *,
+    scan_rows: int = 3,
+) -> tuple[pd.DataFrame, int]:
+    """Drop leading rows that look like duplicated headers in selected columns."""
+    if df.empty:
+        return df, 0
+
+    cols = [col for col in selected_cols if col in df.columns]
+    if not cols:
+        return df, 0
+
+    primary_col = cols[0]
+    to_drop: list[object] = []
+    max_scan = min(len(df), max(1, int(scan_rows)))
+
+    for pos in range(max_scan):
+        idx = df.index[pos]
+        row = df.loc[idx]
+
+        primary_value = _normalize_header_token(str(row.get(primary_col, "")))
+        if not primary_value or primary_value != _normalize_header_token(primary_col):
+            continue
+
+        compared = 0
+        matched = 0
+        for col in cols:
+            raw_value = str(row.get(col, "")).strip()
+            if not raw_value:
+                continue
+            compared += 1
+            if _normalize_header_token(raw_value) == _normalize_header_token(col):
+                matched += 1
+
+        if compared == 1 and matched == 1:
+            to_drop.append(idx)
+        elif compared >= 2 and matched >= 2:
+            to_drop.append(idx)
+
+    if not to_drop:
+        return df, 0
+
+    cleaned = df.drop(index=to_drop).reset_index(drop=True)
+    return cleaned, len(to_drop)
+
+
 def _fast_series_signature(values: pd.Series, sample_size: int = 256) -> str:
     total = len(values)
     if total == 0:
@@ -1770,6 +1822,23 @@ if include_industry and left_industry_col and left_industry_col != left_name_col
     left_extra_cols.append(left_industry_col)
 if include_industry and right_industry_col and right_industry_col != right_name_col:
     right_extra_cols.append(right_industry_col)
+
+left_selected_cols = [left_name_col]
+right_selected_cols = [right_name_col]
+if include_location and left_location_col:
+    left_selected_cols.append(left_location_col)
+if include_location and right_location_col:
+    right_selected_cols.append(right_location_col)
+left_selected_cols.extend(left_extra_cols)
+right_selected_cols.extend(right_extra_cols)
+
+left_df, left_header_rows_dropped = _drop_header_like_rows(left_df, left_selected_cols)
+right_df, right_header_rows_dropped = _drop_header_like_rows(right_df, right_selected_cols)
+if left_header_rows_dropped or right_header_rows_dropped:
+    st.caption(
+        "Ignored header-like rows in uploaded data "
+        f"(source: {left_header_rows_dropped}, target: {right_header_rows_dropped})."
+    )
 
 left_names = _compose_match_values(left_df, left_name_col, left_extra_cols)
 right_names = _compose_match_values(right_df, right_name_col, right_extra_cols)

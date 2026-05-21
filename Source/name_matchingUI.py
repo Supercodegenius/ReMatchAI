@@ -1797,7 +1797,7 @@ if sidebar_menu == "Admin":
 st.markdown(
     """
     <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-      <h3 style="margin:0;">Provide data</h3>
+      <h3 style="margin:0;">Provide Data</h3>
       <div class="nm-muted" style="margin:0;">
         Upload two files (CSV/XLSX) or use the built-in demo files from the sidebar.
       </div>
@@ -1847,7 +1847,7 @@ if show_previews:
 
 choose_col_header, include_loc_col, include_ind_col = st.columns([3, 1.4, 1.4], gap="small")
 with choose_col_header:
-    st.subheader("Choose columns")
+    st.subheader("Choose Columns")
 with include_loc_col:
     include_location = st.checkbox(
         "Include Location",
@@ -2049,7 +2049,7 @@ if run_now:
     has_results = True
 
 if not has_results:
-    st.info("Click **Run name matching** to generate results.")
+    st.info("Click **Run Name Matching** to generate results.")
     st.stop()
 
 full_result_df = st.session_state.get("result_df")

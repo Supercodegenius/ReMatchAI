@@ -1749,7 +1749,7 @@ if show_previews:
 
 choose_col_header, include_loc_col, include_ind_col = st.columns([3, 1.4, 1.4], gap="small")
 with choose_col_header:
-    st.subheader("Choose columns")
+    st.subheader("Choose Columns")
 with include_loc_col:
     include_location = st.checkbox(
         "Include Schedule",

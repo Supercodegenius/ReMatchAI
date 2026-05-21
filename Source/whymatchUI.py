@@ -269,6 +269,10 @@ html(
               }
 
               @media (max-width: 980px) {
+                .wm-shell {
+                  padding: 0.85rem 0.65rem 1rem;
+                }
+
                 .wm-shell::before {
                   width: 30rem;
                   height: 30rem;
@@ -282,12 +286,14 @@ html(
                 }
 
                 .wm-grid {
+                  margin-top: 1.45rem;
                   grid-template-columns: 1fr;
-                  gap: 1rem;
+                  gap: 0.9rem;
                 }
 
                 .wm-card {
                   min-height: 0;
+                  padding: 1.05rem 1.1rem;
                 }
 
                 .wm-card h3 {
@@ -295,7 +301,8 @@ html(
                 }
 
                 .wm-list li {
-                  font-size: 1.2rem;
+                  font-size: 1.02rem;
+                  line-height: 1.08;
                 }
               }
             </style>
@@ -331,11 +338,46 @@ html(
                 </div>
               </div>
             </section>
+            <script>
+              (function () {
+                const postHeight = () => {
+                  const body = document.body;
+                  const doc = document.documentElement;
+                  const contentHeight = Math.max(
+                    body ? body.scrollHeight : 0,
+                    doc ? doc.scrollHeight : 0,
+                  );
+                  window.parent.postMessage(
+                    {
+                      isStreamlitMessage: true,
+                      type: "streamlit:setFrameHeight",
+                      height: contentHeight + 8,
+                    },
+                    "*",
+                  );
+                };
+
+                window.addEventListener("load", postHeight);
+                window.addEventListener("resize", postHeight);
+                if (document.body) {
+                  const observer = new MutationObserver(postHeight);
+                  observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    characterData: true,
+                  });
+                }
+                setTimeout(postHeight, 0);
+                setTimeout(postHeight, 250);
+                setTimeout(postHeight, 800);
+              })();
+            </script>
           </body>
         </html>
         """
     ),
-    height=440,
+    height=560,
     scrolling=False,
 )
 

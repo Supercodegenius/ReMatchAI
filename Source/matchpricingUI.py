@@ -268,6 +268,20 @@ st.markdown(
       .pricing-native-card li {
         margin-bottom: 0.4rem;
       }
+      @media (max-width: 768px) {
+        div[data-testid="stHorizontalBlock"] {
+          flex-direction: column !important;
+          gap: 0.9rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div {
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] .stButton > button,
+        div[data-testid="stHorizontalBlock"] .stLinkButton > a {
+          width: 100% !important;
+        }
+      }
     </style>
     """,
     unsafe_allow_html=True,

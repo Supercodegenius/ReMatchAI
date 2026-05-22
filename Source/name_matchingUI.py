@@ -1676,7 +1676,7 @@ if sidebar_menu == "Tower Matching":
         )
     with tower_run_col:
         run_tower_match = st.button(
-            "Tower Match",
+            "Run Tower Matching",
             type="primary",
             use_container_width=True,
             disabled=tower_source_df is None,

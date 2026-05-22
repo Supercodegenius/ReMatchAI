@@ -280,9 +280,20 @@ footer {
     line-height: 1.14;
   }
 
+  .hero-inner {
+    width: min(36rem, 100%);
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+
   .hero p {
+    width: min(34ch, 100%);
+    margin-left: auto;
+    margin-right: auto;
     font-size: 1rem;
     line-height: 1.45;
+    text-align: center;
+    text-wrap: balance;
   }
 
   .hero-cta {

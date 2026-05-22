@@ -181,6 +181,35 @@ html(
                 align-items: stretch;
               }
 
+              .hm-back-row {
+                position: relative;
+                z-index: 1;
+                margin-top: 1.1rem;
+                display: flex;
+                justify-content: center;
+              }
+
+              .hm-back-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 12rem;
+                padding: 0.88rem 1.35rem;
+                border-radius: 0.7rem;
+                background: linear-gradient(180deg, #0f62ff, #084dce);
+                color: #ffffff !important;
+                text-decoration: none !important;
+                font-family: "Plus Jakarta Sans", sans-serif;
+                font-size: 0.98rem;
+                font-weight: 700;
+                box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
+              }
+
+              .hm-back-btn:hover {
+                color: #ffffff !important;
+                filter: brightness(1.02);
+              }
+
               .hm-col {
                 text-align: left;
                 max-width: 35rem;
@@ -361,6 +390,10 @@ html(
                   </p>
                 </article>
               </div>
+
+              <div class="hm-back-row">
+                <a class="hm-back-btn" href="?page=landing" target="_top" rel="noopener noreferrer">Back to Landing</a>
+              </div>
             </section>
           </body>
         </html>
@@ -370,30 +403,3 @@ html(
     scrolling=False,
 )
 
-st.markdown(
-    dedent(
-        """
-        <style>
-          div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {
-            min-height: 2.9rem;
-            padding: 0.3rem 1.15rem;
-            border-radius: 0.65rem;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            background: linear-gradient(180deg, #0f62ff, #084dce);
-            color: #ffffff;
-            font-family: "Plus Jakarta Sans", sans-serif;
-            font-size: 0.96rem;
-            font-weight: 700;
-            box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
-          }
-        </style>
-        """
-    ),
-    unsafe_allow_html=True,
-)
-
-left_spacer, button_col, right_spacer = st.columns([3, 4, 3])
-with button_col:
-    if st.button("Back to Landing", type="primary", use_container_width=True, key="how_match_works_back"):
-        st.query_params["page"] = "landing"
-        st.rerun()

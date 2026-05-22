@@ -201,6 +201,33 @@ html(
                 text-align: left;
               }
 
+              .wm-back-row {
+                margin-top: 1.15rem;
+                display: flex;
+                justify-content: center;
+              }
+
+              .wm-back-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 12rem;
+                padding: 0.88rem 1.35rem;
+                border-radius: 0.7rem;
+                background: linear-gradient(180deg, #0f62ff, #084dce);
+                color: #ffffff !important;
+                text-decoration: none !important;
+                font-family: "Plus Jakarta Sans", sans-serif;
+                font-size: 0.98rem;
+                font-weight: 700;
+                box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
+              }
+
+              .wm-back-btn:hover {
+                color: #ffffff !important;
+                filter: brightness(1.02);
+              }
+
               .wm-actions {
                 margin-top: 1.35rem;
                 display: flex;
@@ -336,6 +363,10 @@ html(
                     </ul>
                   </article>
                 </div>
+
+                <div class="wm-back-row">
+                  <a class="wm-back-btn" href="?page=landing" target="_top" rel="noopener noreferrer">Back to Landing</a>
+                </div>
               </div>
             </section>
             <script>
@@ -380,9 +411,3 @@ html(
     height=860,
     scrolling=False,
 )
-
-left_spacer, button_col, right_spacer = st.columns([3, 4, 3])
-with button_col:
-  if st.button("Back to Landing", type="primary", use_container_width=True, key="why_match_back_landing"):
-    st.query_params["page"] = "landing"
-    st.rerun()

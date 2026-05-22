@@ -1666,11 +1666,32 @@ if sidebar_menu == "Tower Matching":
         final_result_df = pd.DataFrame(final_rows, columns=columns)
         return working_df, working_next_df, final_result_df
 
+    tower_back_col, tower_run_col = st.columns(2, gap="small")
+    with tower_back_col:
+        tower_back_to_landing = st.button(
+            "Back to Landing",
+            type="primary",
+            use_container_width=True,
+            key="tower_matching_back_to_landing",
+        )
+    with tower_run_col:
+        run_tower_match = st.button(
+            "Tower Match",
+            type="primary",
+            use_container_width=True,
+            disabled=tower_source_df is None,
+            key="tower_matching_run",
+        )
+
+    if tower_back_to_landing:
+        st.query_params["page"] = "landing"
+        st.rerun()
+
     if tower_source_df is None:
         st.info("Upload the tower source file to get started.")
         st.stop()
 
-    if st.button("Tower Match", type="primary", use_container_width=True):
+    if run_tower_match:
         with st.spinner("Running Tower Match formula..."):
             working_df, working_next_df, final_result_df = TM_Formula(tower_source_df)
 

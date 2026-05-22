@@ -1173,7 +1173,7 @@ with st.sidebar:
         "Name Matching": "🔎 Name Matching",
         "Bulk Name Matching": "📦 Bulk Name Matching",
         "AirlineMatching": "✈️ Airline Matching",
-        "Tower Matching": "🗼 Tower Matching",
+        "Tower Matching": "🗼 Provide Data for Tower Matching",
         "Admin": "⚙️ Admin",
         "SLM": "🤖 SLM",
     }
@@ -1465,7 +1465,7 @@ if sidebar_menu == "Data Upload":
     st.stop()
 
 if sidebar_menu == "Tower Matching":
-    st.subheader("Tower Matching")
+    st.subheader("Provide Data for Tower Matching")
 
     tower_template_path = os.path.join(BASE_DIR, "demo_data", "Tower_Matching_Template.xlsx")
     if os.path.exists(tower_template_path):

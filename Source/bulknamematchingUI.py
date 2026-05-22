@@ -363,40 +363,51 @@ else:
 
     st.markdown("")
 
-    # Validation guard
-    _can_run = bool(
-        source_files
-        and target_file is not None
-        and target_cols
-        and src_name_col
-        and tgt_name_col
-    )
-    _missing: list[str] = []
-    if target_file is None:
-        _missing.append("target file")
-    elif not target_cols:
-        _missing.append("readable target columns")
-    if not src_name_col:
-        _missing.append("source name column")
-    if not tgt_name_col:
-        _missing.append("target name column")
+# Validation guard and action row are always visible on the bulk page.
+_can_run = bool(
+    source_files
+    and target_file is not None
+    and target_cols
+    and src_name_col
+    and tgt_name_col
+)
+_missing: list[str] = []
+if not source_files:
+    _missing.append("source files")
+if target_file is None:
+    _missing.append("target file")
+elif not target_cols:
+    _missing.append("readable target columns")
+if not src_name_col:
+    _missing.append("source name column")
+if not tgt_name_col:
+    _missing.append("target name column")
 
-    st.caption(
-        "Ready check: "
-        + (
-            "ready to run."
-            if not _missing
-            else f"missing {', '.join(_missing)}."
-        )
+st.caption(
+    "Ready check: "
+    + (
+        "ready to run."
+        if not _missing
+        else f"missing {', '.join(_missing)}."
     )
-    if _missing:
-        st.warning(f"Cannot start yet. Please provide: {', '.join(_missing)}.")
+)
+if _missing:
+    st.warning(f"Cannot start yet. Please provide: {', '.join(_missing)}.")
 
-    st.caption(
-        f"Run status: {st.session_state.get('bulk_last_run_status', 'Idle')} | "
-        f"Runs this session: {int(st.session_state.get('bulk_run_count', 0))}"
+st.caption(
+    f"Run status: {st.session_state.get('bulk_last_run_status', 'Idle')} | "
+    f"Runs this session: {int(st.session_state.get('bulk_run_count', 0))}"
+)
+
+bulk_back_col, bulk_run_col = st.columns(2, gap="small")
+with bulk_back_col:
+    back_to_landing = st.button(
+        "Back to Landing",
+        type="primary",
+        use_container_width=True,
+        key="bulk_back_to_landing",
     )
-
+with bulk_run_col:
     start_btn = st.button(
         "▶  Start Bulk Processing",
         type="primary",
@@ -405,7 +416,11 @@ else:
         key="bulk_start_btn",
     )
 
-    if start_btn and _can_run:
+if back_to_landing:
+    st.query_params["page"] = "landing"
+    st.rerun()
+
+if start_btn and _can_run:
         st.session_state["bulk_run_count"] = int(st.session_state.get("bulk_run_count", 0)) + 1
         st.session_state["bulk_last_run_status"] = "Running"
         st.session_state["bulk_last_run_missing"] = []

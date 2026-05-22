@@ -1699,7 +1699,7 @@ if sidebar_menu == "Admin":
 st.markdown(
     """
     <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-      <h3 style="margin:0;">Provide data</h3>
+    <h3 style="margin:0;">Provide Data</h3>
       <div class="nm-muted" style="margin:0;">
         Upload two files (CSV/XLSX) or use the built-in demo files from the sidebar.
       </div>

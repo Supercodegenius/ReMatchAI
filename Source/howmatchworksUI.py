@@ -390,10 +390,6 @@ html(
                   </p>
                 </article>
               </div>
-
-              <div class="hm-back-row">
-                <a class="hm-back-btn" href="?page=landing" target="_top" rel="noopener noreferrer">Back to Landing</a>
-              </div>
             </section>
           </body>
         </html>
@@ -402,4 +398,38 @@ html(
     height=860,
     scrolling=False,
 )
+
+st.markdown(
+    dedent(
+        """
+        <style>
+          div[data-testid="stButton"] {
+            display: flex;
+            justify-content: center;
+            margin: 0.72rem 0 0.95rem;
+          }
+
+          div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {
+            min-height: 2.9rem;
+            padding: 0.3rem 1.15rem;
+            border-radius: 0.65rem;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            background: linear-gradient(180deg, #0f62ff, #084dce);
+            color: #ffffff;
+            font-family: "Plus Jakarta Sans", sans-serif;
+            font-size: 0.96rem;
+            font-weight: 700;
+            box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
+          }
+        </style>
+        """
+    ),
+    unsafe_allow_html=True,
+)
+
+left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
+with button_col:
+    if st.button("Back to Landing", type="primary", use_container_width=True, key="how_match_works_back"):
+        st.query_params["page"] = "landing"
+        st.rerun()
 

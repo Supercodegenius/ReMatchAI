@@ -364,9 +364,6 @@ html(
                   </article>
                 </div>
 
-                <div class="wm-back-row">
-                  <a class="wm-back-btn" href="?page=landing" target="_top" rel="noopener noreferrer">Back to Landing</a>
-                </div>
               </div>
             </section>
             <script>
@@ -411,3 +408,9 @@ html(
     height=860,
     scrolling=False,
 )
+
+left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
+with button_col:
+    if st.button("Back to Landing", type="primary", use_container_width=True, key="why_match_back"):
+        st.query_params["page"] = "landing"
+        st.rerun()

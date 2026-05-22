@@ -1441,7 +1441,7 @@ if sidebar_menu == "Data Upload":
     st.stop()
 
 if sidebar_menu == "Tower Matching":
-    st.subheader("Tower Matching")
+    st.subheader("Provide Data for Tower Matching")
 
     tower_template_path = os.path.join(BASE_DIR, "demo_data", "Tower_Matching_Template.xlsx")
     if os.path.exists(tower_template_path):
@@ -1720,7 +1720,7 @@ if sidebar_menu == "Admin":
 st.markdown(
     """
     <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-    <h3 style="margin:0;">Provide Data</h3>
+    <h3 style="margin:0;">Provide Data for Airline Matching</h3>
       <div class="nm-muted" style="margin:0;">
         Upload two files (CSV/XLSX) or use the built-in demo files from the sidebar.
       </div>

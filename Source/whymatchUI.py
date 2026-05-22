@@ -405,7 +405,7 @@ html(
         </html>
         """
     ),
-    height=760,
+    height=500,
     scrolling=False,
 )
 

@@ -430,8 +430,8 @@ html(
         </html>
         """
     ),
-    height=520,
-    scrolling=False,
+      height=820,
+      scrolling=True,
 )
 
 st.markdown(

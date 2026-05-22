@@ -405,8 +405,8 @@ html(
         </html>
         """
     ),
-    height=500,
-    scrolling=False,
+      height=860,
+      scrolling=True,
 )
 
 left_spacer, button_col, right_spacer = st.columns([4, 2, 4])

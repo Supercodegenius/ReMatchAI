@@ -88,7 +88,7 @@ st.markdown(
           div[data-testid="stButton"] {
             display: flex;
             justify-content: center;
-            margin: 0.75rem 0 0.95rem;
+            margin: 0.18rem 0 0.95rem;
           }
 
       div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {
@@ -405,7 +405,7 @@ html(
         </html>
         """
     ),
-    height=860,
+    height=760,
     scrolling=False,
 )
 

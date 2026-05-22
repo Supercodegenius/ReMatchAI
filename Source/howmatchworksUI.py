@@ -391,11 +391,46 @@ html(
                 </article>
               </div>
             </section>
+            <script>
+              (function () {
+                const postHeight = () => {
+                  const body = document.body;
+                  const doc = document.documentElement;
+                  const contentHeight = Math.max(
+                    body ? body.scrollHeight : 0,
+                    doc ? doc.scrollHeight : 0,
+                  );
+                  window.parent.postMessage(
+                    {
+                      isStreamlitMessage: true,
+                      type: "streamlit:setFrameHeight",
+                      height: contentHeight + 8,
+                    },
+                    "*",
+                  );
+                };
+
+                window.addEventListener("load", postHeight);
+                window.addEventListener("resize", postHeight);
+                if (document.body) {
+                  const observer = new MutationObserver(postHeight);
+                  observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    characterData: true,
+                  });
+                }
+                setTimeout(postHeight, 0);
+                setTimeout(postHeight, 250);
+                setTimeout(postHeight, 800);
+              })();
+            </script>
           </body>
         </html>
         """
     ),
-    height=860,
+    height=760,
     scrolling=False,
 )
 
@@ -406,7 +441,7 @@ st.markdown(
           div[data-testid="stButton"] {
             display: flex;
             justify-content: center;
-            margin: 0.72rem 0 0.95rem;
+            margin: 0.18rem 0 0.95rem;
           }
 
           div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {

@@ -1,5 +1,4 @@
 import os
-import time
 from textwrap import dedent
 
 import streamlit as st
@@ -102,225 +101,224 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    dedent(
-        """
-    <style>
-      .wm-shell {
-        width: min(76.5rem, calc(100% - 2.4rem));
-        margin: 0 auto;
-        padding: 1.05rem 0 1.2rem;
-        box-sizing: border-box;
-        position: relative;
-        text-align: center;
-        overflow-x: clip;
-      }
-
-      .wm-shell::before {
-        content: "";
-        position: absolute;
-        left: 50%;
-        top: 4.2rem;
-        transform: translateX(-50%);
-        width: 41rem;
-        height: 41rem;
-        border-radius: 50%;
-        background: repeating-radial-gradient(
-          circle at center,
-          rgba(123, 178, 247, 0.18) 0,
-          rgba(123, 178, 247, 0.18) 1px,
-          transparent 2px,
-          transparent 14px
-        );
-        opacity: 0.22;
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      .wm-content {
-        position: relative;
-        z-index: 1;
-        padding: 1rem 0.2rem 0;
-      }
-
-      .wm-title {
-        margin: 0;
-        font-family: "Plus Jakarta Sans", sans-serif;
-        font-size: clamp(2.35rem, 4.2vw, 3.9rem);
-        line-height: 1.04;
-        letter-spacing: -0.02em;
-        font-weight: 800;
-        color: #12131a;
-      }
-
-      .wm-title-em {
-        color: #0f62ff;
-      }
-
-      .wm-subtitle {
-        margin: 0.7rem auto 0;
-        max-width: 54rem;
-        font-size: clamp(1.03rem, 1.35vw, 1.4rem);
-        line-height: 1.18;
-        color: #343741;
-        font-weight: 500;
-      }
-
-      .wm-grid {
-        margin-top: 2.15rem;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: clamp(0.95rem, 1.45vw, 1.42rem);
-        text-align: left;
-      }
-
-      @media (max-width: 1200px) {
-        .wm-shell {
-          width: min(74rem, calc(100% - 1.6rem));
-        }
-      }
-
-      .wm-card {
-        border: 1px solid rgba(18, 19, 26, 0.08);
-        border-radius: 0.88rem;
-        background: #ffffff;
-        min-height: 15.2rem;
-        padding: 1.32rem 1.48rem;
-      }
-
-      .wm-icon {
-        width: 2.6rem;
-        height: 2.6rem;
-        border-radius: 0.68rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(180deg, #e9f2ff, #dae8fc);
-        color: #2f70d8;
-        margin-bottom: 1rem;
-      }
-
-      .wm-icon-check {
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #2f70d8;
-        border-radius: 0.2rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 800;
-        line-height: 1;
-      }
-
-      .wm-icon-sun {
-        font-size: 1.18rem;
-        line-height: 1;
-      }
-
-      .wm-card h2 {
-        margin: 0 0 0.62rem;
-        font-size: 2.87rem;
-        line-height: 0.98;
-        color: #1b1d24;
-        font-family: "Plus Jakarta Sans", sans-serif;
-        font-weight: 700;
-      }
-
-      .wm-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .wm-list li {
-        color: #343741;
-        line-height: 1.00;
-        font-size: 1.22rem;
-        margin-bottom: 0.31rem;
-        font-weight: 500;
-      }
-
-      .wm-actions {
-        margin-top: 1.35rem;
-        display: flex;
-        justify-content: center;
-      }
-
-      @media (min-width: 981px) {
-        .wm-actions {
-          margin-top: 1.7rem;
-        }
-      }
-
-      .wm-back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 12rem;
-        padding: 0.88rem 1.35rem;
-        border-radius: 0.7rem;
-        background: linear-gradient(180deg, #0f62ff, #084dce);
-        color: #ffffff !important;
-        text-decoration: none !important;
-        font-family: "Plus Jakarta Sans", sans-serif;
-        font-size: 0.98rem;
-        font-weight: 700;
-        box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
-      }
-
-      .wm-back-btn:hover {
-        color: #ffffff !important;
-        filter: brightness(1.02);
-      }
-
-      @media (max-width: 980px) {
-        .wm-shell {
-          width: calc(100% - 1rem);
-          padding: 0.85rem 0 1rem;
-        }
-
-        .wm-shell::before {
-          width: 30rem;
-          height: 30rem;
-          top: 5rem;
-        }
-
-        .wm-subtitle {
-          max-width: 100%;
-          line-height: 1.22;
-          font-size: 1.2rem;
-        }
-
-        .wm-grid {
-          margin-top: 1.45rem;
-          grid-template-columns: 1fr;
-          gap: 0.9rem;
-        }
-
-        .wm-card {
-          min-height: 0;
-          padding: 1.05rem 1.1rem;
-        }
-
-        .wm-card h2 {
-          font-size: 2.25rem;
-        }
-
-        .wm-list li {
-          font-size: 1.02rem;
-          line-height: 1.08;
-        }
-      }
-    </style>
-    """
-    ),
-    unsafe_allow_html=True,
-)
-
 st_html(
     dedent(
         """
+        <style>
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow: hidden;
+          }
+
+          .wm-shell {
+            width: min(76.5rem, calc(100% - 2.4rem));
+            margin: 0 auto;
+            padding: 1.05rem 0 1.2rem;
+            box-sizing: border-box;
+            position: relative;
+            text-align: center;
+            overflow-x: clip;
+            font-family: "Plus Jakarta Sans", sans-serif;
+          }
+
+          .wm-shell::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 4.2rem;
+            transform: translateX(-50%);
+            width: 41rem;
+            height: 41rem;
+            border-radius: 50%;
+            background: repeating-radial-gradient(
+              circle at center,
+              rgba(123, 178, 247, 0.18) 0,
+              rgba(123, 178, 247, 0.18) 1px,
+              transparent 2px,
+              transparent 14px
+            );
+            opacity: 0.22;
+            pointer-events: none;
+            z-index: 0;
+          }
+
+          .wm-content {
+            position: relative;
+            z-index: 1;
+            padding: 1rem 0.2rem 0;
+          }
+
+          .wm-title {
+            margin: 0;
+            font-size: clamp(2.35rem, 4.2vw, 3.9rem);
+            line-height: 1.04;
+            letter-spacing: -0.02em;
+            font-weight: 800;
+            color: #12131a;
+          }
+
+          .wm-title-em {
+            color: #0f62ff;
+          }
+
+          .wm-subtitle {
+            margin: 0.7rem auto 0;
+            max-width: 54rem;
+            font-size: clamp(1.03rem, 1.35vw, 1.4rem);
+            line-height: 1.18;
+            color: #343741;
+            font-weight: 500;
+          }
+
+          .wm-grid {
+            margin-top: 2.15rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: clamp(0.95rem, 1.45vw, 1.42rem);
+            text-align: left;
+          }
+
+          @media (max-width: 1200px) {
+            .wm-shell {
+              width: min(74rem, calc(100% - 1.6rem));
+            }
+          }
+
+          .wm-card {
+            border: 1px solid rgba(18, 19, 26, 0.08);
+            border-radius: 0.88rem;
+            background: #ffffff;
+            min-height: 15.2rem;
+            padding: 1.32rem 1.48rem;
+          }
+
+          .wm-icon {
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 0.68rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #e9f2ff, #dae8fc);
+            color: #2f70d8;
+            margin-bottom: 1rem;
+          }
+
+          .wm-icon-check {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #2f70d8;
+            border-radius: 0.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            line-height: 1;
+          }
+
+          .wm-icon-sun {
+            font-size: 1.18rem;
+            line-height: 1;
+          }
+
+          .wm-card h2 {
+            margin: 0 0 0.62rem;
+            font-size: 2.87rem;
+            line-height: 0.98;
+            color: #1b1d24;
+            font-weight: 700;
+          }
+
+          .wm-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+          }
+
+          .wm-list li {
+            color: #343741;
+            line-height: 1.00;
+            font-size: 1.22rem;
+            margin-bottom: 0.31rem;
+            font-weight: 500;
+          }
+
+          .wm-actions {
+            margin-top: 1.35rem;
+            display: flex;
+            justify-content: center;
+          }
+
+          @media (min-width: 981px) {
+            .wm-actions {
+              margin-top: 1.7rem;
+            }
+          }
+
+          .wm-back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 12rem;
+            padding: 0.88rem 1.35rem;
+            border-radius: 0.7rem;
+            background: linear-gradient(180deg, #0f62ff, #084dce);
+            color: #ffffff !important;
+            text-decoration: none !important;
+            font-size: 0.98rem;
+            font-weight: 700;
+            box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
+          }
+
+          .wm-back-btn:hover {
+            color: #ffffff !important;
+            filter: brightness(1.02);
+          }
+
+          @media (max-width: 980px) {
+            .wm-shell {
+              width: calc(100% - 1rem);
+              padding: 0.85rem 0 1rem;
+            }
+
+            .wm-shell::before {
+              width: 30rem;
+              height: 30rem;
+              top: 5rem;
+            }
+
+            .wm-subtitle {
+              max-width: 100%;
+              line-height: 1.22;
+              font-size: 1.2rem;
+            }
+
+            .wm-grid {
+              margin-top: 1.45rem;
+              grid-template-columns: 1fr;
+              gap: 0.9rem;
+            }
+
+            .wm-card {
+              min-height: 0;
+              padding: 1.05rem 1.1rem;
+            }
+
+            .wm-card h2 {
+              font-size: 2.25rem;
+            }
+
+            .wm-list li {
+              font-size: 1.02rem;
+              line-height: 1.08;
+            }
+          }
+        </style>
+
         <section class="wm-shell">
           <div class="wm-content">
             <h1 class="wm-title">Why Re<span class="wm-title-em">Match</span> is different</h1>
@@ -351,51 +349,13 @@ st_html(
             </div>
 
             <div class="wm-actions">
-              <a class="wm-back-btn" href="?page=landing&nav=iframe" target="_self">Back to Landing</a>
+              <a class="wm-back-btn" href="?page=landing&nav=whymatch" target="_self">Back to Landing</a>
             </div>
           </div>
         </section>
         """
     ),
-    height=520,
+    height=590,
     scrolling=False,
 )
-
-st.markdown(
-    dedent(
-        """
-        <style>
-          div[data-testid="stButton"] {
-            display: flex;
-            justify-content: center;
-            margin: 0.15rem 0 0.9rem;
-          }
-
-          div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {
-            min-height: 2.9rem;
-            padding: 0.3rem 1.15rem;
-            border-radius: 0.65rem;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            background: linear-gradient(180deg, #0f62ff, #084dce);
-            color: #ffffff;
-            font-family: "Plus Jakarta Sans", sans-serif;
-            font-size: 0.96rem;
-            font-weight: 700;
-            box-shadow: 0 8px 16px rgba(15, 98, 255, 0.22);
-          }
-        </style>
-        """
-    ),
-    unsafe_allow_html=True,
-)
-
-left_spacer, button_col, right_spacer = st.columns([4, 2, 4])
-with button_col:
-  back_clicked = st.button("Back to Landing", type="primary", use_container_width=True, key="why_match_back_native")
-
-if back_clicked:
-  st.query_params.clear()
-  st.query_params["page"] = "landing"
-  st.query_params["nav"] = str(int(time.time() * 1000))
-  st.rerun()
 

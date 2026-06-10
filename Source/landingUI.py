@@ -14,7 +14,6 @@ def _safe_set_page_config(**kwargs) -> None:
     try:
         st.set_page_config(**kwargs)
     except Exception:
-        # Ignore duplicate page config errors when loaded by parent scripts.
         pass
 
 
@@ -87,38 +86,43 @@ if _open_demo_dialog:
     except KeyError:
         pass
 
+# 🔥 HTML MUST START AT COLUMN 0 — NO INDENTATION AT ALL
 st.markdown(
-    f"""
-    <section class="landing-shell">
-      <nav class="landing-nav">
-        <div class="brand-wrap">
-          <img class="brand-logo" src="{logo_data_uri}" alt="ReMatch" />
-          <span class="brand-dot">•</span>
-          <span class="brand-tagline">AI-Powered Insured Name Matching for Reinsurance</span>
-        </div>
-        <div class="nav-cta">
-          <a class="cta-btn" href="?page=landing&demo=1" target="_self">Book a Demo</a>
-          <a class="cta-btn" href="?page=matcher" target="_self">Tool Play</a>
-        </div>
-      </nav>
+f"""
+<section class="landing-shell">
+<nav class="landing-nav">
+<div class="brand-wrap">
+<img class="brand-logo" src="{logo_data_uri}" alt="ReMatch" />
+<span class="brand-dot">•</span>
+<span class="brand-tagline">AI-Powered Insured Name Matching for Reinsurance</span>
+</div>
+<div class="nav-cta">
+<a class="cta-btn" href="?page=landing&demo=1" target="_self">Book a Demo</a>
+<a class="cta-btn" href="?page=matcher" target="_self">Tool Play</a>
+</div>
+</nav>
 
-      <main class="hero">
-        <div class="hero-inner">
-          <div class="hero-chip">✧ AI-Powered</div>
-          <h1>Your exposure is only as good<br>as your data</h1>
-          <p>
-            ReMatch cleans and matches messy reinsurance bdx data using AI techniques and six intelligent
-            matching methods, so the numbers you rely on are the numbers you can trust.
-          </p>
-          <div class="hero-cta">
-            <a class="cta-btn" href="?page=whymatch" target="_self">Why Match</a>
-                        <a class="cta-btn" href="?page=rematchpricing" target="_self">Price Model</a>
-            <a class="cta-btn" href="?page=howmatchworks" target="_self">How it Works</a>
-          </div>
-        </div>
-      </main>
-    </section>
-    """,
+<main class="hero">
+<div class="hero-inner">
+<div class="hero-chip">✧ AI-Powered</div>
+
+<h1>Your exposure is only as good<br>as your data</h1>
+
+<p>
+ReMatch cleans and matches messy reinsurance bdx data using AI techniques and six intelligent
+matching methods, so the numbers you rely on are the numbers you can trust.
+</p>
+
+<div class="hero-cta">
+<a class="cta-btn" href="?page=whymatch" target="_self">Why Match</a>
+<a class="cta-btn" href="?page=rematchpricing" target="_self">Price Model</a>
+<a class="cta-btn" href="?page=howmatchworks" target="_self">How it Works</a>
+</div>
+
+</div>
+</main>
+</section>
+""",
     unsafe_allow_html=True,
 )
 

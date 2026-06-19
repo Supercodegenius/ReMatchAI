@@ -139,6 +139,13 @@ footer {
 
 st.markdown(
         """
+            <head>
+        <title>Why AI Name Matching Matters in Reinsurance | RematchingAI</title>
+        <meta name="description" content="Discover why accurate AI name matching is essential for reinsurers, brokers, and insurers. Improve data quality, reduce duplication, strengthen compliance, and automate bordereaux workflows with RematchingAI.">
+        <meta name="keywords" content="AI name matching, reinsurance data quality, entity resolution, bordereaux automation, insurance data cleansing, KYC AML screening, fuzzy matching, insured name matching">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="https://rematchingai.com/whymatch">
+    </head>
         <style>
             div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {
                 min-height: 2.9rem;

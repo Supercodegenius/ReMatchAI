@@ -1,3 +1,9 @@
+# Build with AI: AI-Powered Name Matching
+# Dashboards with Streamlit
+# Name Matching UI Building with Streamlit and Python
+
+# Developed By Ambuj Kumar
+
 import os
 from textwrap import dedent
 
@@ -25,6 +31,13 @@ _safe_set_page_config(
 st.markdown(
     dedent(
         """
+         <head>
+        <title>How AI Name Matching Works | Entity Resolution for Reinsurance</title>
+        <meta name="description" content="Learn how RematchingAI uses machine learning, fuzzy logic, and entity resolution to match insured names with high accuracy. Built for reinsurance, insurance, and financial services data quality.">
+        <meta name="keywords" content="AI name matching, entity resolution, reinsurance automation, fuzzy matching, machine learning name matching, insurance data quality, bordereaux processing, insured name matching">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="https://rematchingai.com/howmatchworks">
+    </head>
         <style>
           html,
           body,

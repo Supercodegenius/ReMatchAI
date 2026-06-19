@@ -506,15 +506,14 @@ def _slm_lexical_guard_passes(a: str, b: str) -> bool:
 
     # Multi-token names with zero shared tokens need high character-level similarity.
     # This prevents false positives like "volvo cars" matching "viola art".
-    if overlap == 0 and len(tokens_a) > 1 and len(tokens_b) > 1:
-        return seq_ratio >= 0.65
+    if overlap == 0:
+        if len(tokens_a) == 1 and len(tokens_b) == 1:
+            return seq_ratio >= 0.72
+        if len(tokens_a) > 1 and len(tokens_b) > 1:
+            return seq_ratio >= 0.65
+        return seq_ratio >= 0.58
 
-    overlap_ratio = (
-        overlap / max(1, min(len(tokens_a), len(tokens_b)))
-        if tokens_a and tokens_b
-        else 0.0
-    )
-    return not (seq_ratio < 0.45 and overlap == 0 and overlap_ratio == 0.0)
+    return True
 
 
 @lru_cache(maxsize=1)
@@ -867,6 +866,32 @@ def match_names(
     target_lengths = [len(name) for name in target_normalized]
     target_exact_map = dict(zip(target_normalized, target_originals))
     get_candidates = _build_candidate_getter(target_normalized)
+
+    feedback_approved: dict[str, str] = {}
+    feedback_rejected_by_source: dict[str, set[str]] = defaultdict(set)
+    if isinstance(feedback, dict):
+        approved_raw = feedback.get("approved", {})
+        rejected_raw = feedback.get("rejected", set())
+
+        if isinstance(approved_raw, dict):
+            for src_raw, tgt_raw in approved_raw.items():
+                src_n = normalize_name(str(src_raw or ""))
+                tgt_n = normalize_name(str(tgt_raw or ""))
+                if not src_n or not tgt_n:
+                    continue
+                if tgt_n in target_exact_map:
+                    feedback_approved[src_n] = target_exact_map[tgt_n]
+
+        if isinstance(rejected_raw, (set, list, tuple)):
+            for pair in rejected_raw:
+                if not isinstance(pair, (tuple, list)) or len(pair) != 2:
+                    continue
+                src_n = normalize_name(str(pair[0] or ""))
+                tgt_n = normalize_name(str(pair[1] or ""))
+                if not src_n or not tgt_n:
+                    continue
+                if tgt_n in target_exact_map:
+                    feedback_rejected_by_source[src_n].add(tgt_n)
 
     if method == "fuzzy":
         best_cache: dict[str, dict] = {}
@@ -1293,7 +1318,7 @@ def match_names(
         unique_source_norm = list(dict.fromkeys(src_slm_query.tolist()))
         source_embedding_map: dict[str, object] = {}
 
-        ann_best_map: dict[str, tuple[int, float]] = {}
+        ann_best_map: dict[str, list[tuple[int, float]]] = {}
         fast_path_match_map: dict[str, dict] = {}
         unresolved_sources: list[str] = []
 
@@ -1313,11 +1338,18 @@ def match_names(
                 source_embeddings_np = (
                     unresolved_embeddings.detach().cpu().numpy().astype("float32", copy=False)
                 )
-                ann_scores, ann_indices = ann_index.search(source_embeddings_np, 1)
+                ann_k = max(1, min(8, len(target_normalized)))
+                ann_scores, ann_indices = ann_index.search(source_embeddings_np, ann_k)
                 for idx, src_n in enumerate(unresolved_sources):
-                    best_idx = int(ann_indices[idx][0])
-                    best_score = float(ann_scores[idx][0])
-                    ann_best_map[src_n] = (best_idx, best_score)
+                    best_hits: list[tuple[int, float]] = []
+                    for hit_pos in range(ann_k):
+                        best_idx = int(ann_indices[idx][hit_pos])
+                        if best_idx < 0:
+                            continue
+                        best_score = float(ann_scores[idx][hit_pos])
+                        best_hits.append((best_idx, best_score))
+                    if best_hits:
+                        ann_best_map[src_n] = best_hits
             except Exception:
                 ann_best_map = {}
 
@@ -1429,8 +1461,29 @@ def match_names(
 
         for src, src_n, src_query_n in zip(src_series, src_norm, src_slm_query):
             if src_n not in best_cache:
+                rejected_targets = feedback_rejected_by_source.get(src_n, set())
+
+                approved_match = feedback_approved.get(src_n)
+                if approved_match:
+                    approved_norm = normalize_name(approved_match)
+                    if approved_norm and approved_norm not in rejected_targets:
+                        best_cache[src_n] = {
+                            "source_normalized": src_n,
+                            "slm_query_normalized": src_query_n,
+                            "matched_name": approved_match,
+                            "score": 100,
+                            "slm_score": 1.0,
+                            "slm_raw_score": 1.0,
+                            "slm_guard_passed": True,
+                            "slm_stage": "feedback_confirmed",
+                            "is_match": True,
+                        }
+                        results.append({"source_name": src, **best_cache[src_n]})
+                        continue
+
                 exact_match = target_exact_map.get(src_query_n)
-                if exact_match is not None:
+                exact_match_norm = normalize_name(exact_match) if exact_match is not None else ""
+                if exact_match is not None and exact_match_norm not in rejected_targets:
                     best_cache[src_n] = {
                         "source_normalized": src_n,
                         "slm_query_normalized": src_query_n,
@@ -1447,6 +1500,10 @@ def match_names(
 
                 adaptive_fast = fast_path_match_map.get(src_query_n)
                 if adaptive_fast is not None:
+                    adaptive_fast_norm = normalize_name(str(adaptive_fast.get("matched_name", "")))
+                    if adaptive_fast_norm in rejected_targets:
+                        adaptive_fast = None
+                if adaptive_fast is not None:
                     best_cache[src_n] = adaptive_fast
                     results.append({"source_name": src, **best_cache[src_n]})
                     continue
@@ -1455,18 +1512,42 @@ def match_names(
                 best_slm_score = -1.0
                 best_target_norm = ""
 
-                ann_hit = ann_best_map.get(src_query_n)
-                if ann_hit is not None:
-                    best_idx, best_slm_score = ann_hit
-                    if 0 <= best_idx < len(target_originals):
-                        if best_slm_score < -1.0:
-                            best_slm_score = -1.0
-                        elif best_slm_score > 1.0:
-                            best_slm_score = 1.0
-                        best_name = target_originals[best_idx]
-                        best_target_norm = target_normalized[best_idx]
+                ann_hits = ann_best_map.get(src_query_n)
+                if ann_hits is not None:
+                    fallback_idx = -1
+                    fallback_score = -1.0
+                    for best_idx, ann_score in ann_hits:
+                        if not (0 <= best_idx < len(target_originals)):
+                            continue
+                        candidate_target_norm = target_normalized[best_idx]
+                        if candidate_target_norm in rejected_targets:
+                            continue
+                        if fallback_idx < 0:
+                            fallback_idx = best_idx
+                            fallback_score = ann_score
+                        if _slm_lexical_guard_passes(src_query_n, candidate_target_norm):
+                            best_slm_score = ann_score
+                            best_name = target_originals[best_idx]
+                            best_target_norm = candidate_target_norm
+                            break
+
+                    if not best_name and fallback_idx >= 0:
+                        best_slm_score = fallback_score
+                        best_name = target_originals[fallback_idx]
+                        best_target_norm = target_normalized[fallback_idx]
+
+                    if best_slm_score < -1.0:
+                        best_slm_score = -1.0
+                    elif best_slm_score > 1.0:
+                        best_slm_score = 1.0
                 else:
                     candidate_indices = candidate_map.get(src_query_n, all_indices)
+                    if rejected_targets:
+                        candidate_indices = [
+                            idx
+                            for idx in candidate_indices
+                            if target_normalized[idx] not in rejected_targets
+                        ]
                     src_embedding = source_embedding_map.get(src_query_n)
                     if src_embedding is None:
                         src_embedding = embed_many([src_query_n])[0]
@@ -1477,15 +1558,32 @@ def match_names(
                             candidate_positions = [required_index_to_pos[idx] for idx in candidate_indices]
                         candidate_tensor = required_target_embeddings[candidate_positions]
                         similarities = torch.matmul(candidate_tensor, src_embedding)
-                        best_pos = int(torch.argmax(similarities).item())
-                        best_idx = candidate_indices[best_pos]
-                        best_slm_score = float(similarities[best_pos].item())
+                        sorted_positions = torch.argsort(similarities, descending=True)
+                        fallback_idx = -1
+                        fallback_score = -1.0
+                        for pos_tensor in sorted_positions:
+                            best_pos = int(pos_tensor.item())
+                            candidate_idx = candidate_indices[best_pos]
+                            candidate_target_norm = target_normalized[candidate_idx]
+                            candidate_score = float(similarities[best_pos].item())
+                            if fallback_idx < 0:
+                                fallback_idx = candidate_idx
+                                fallback_score = candidate_score
+                            if _slm_lexical_guard_passes(src_query_n, candidate_target_norm):
+                                best_slm_score = candidate_score
+                                best_name = target_originals[candidate_idx]
+                                best_target_norm = candidate_target_norm
+                                break
+
+                        if not best_name and fallback_idx >= 0:
+                            best_slm_score = fallback_score
+                            best_name = target_originals[fallback_idx]
+                            best_target_norm = target_normalized[fallback_idx]
+
                         if best_slm_score < -1.0:
                             best_slm_score = -1.0
                         elif best_slm_score > 1.0:
                             best_slm_score = 1.0
-                        best_name = target_originals[best_idx]
-                        best_target_norm = target_normalized[best_idx]
 
                 guard_ok = _slm_lexical_guard_passes(src_query_n, best_target_norm)
                 score_0_100 = int(round((best_slm_score + 1.0) * 50.0))

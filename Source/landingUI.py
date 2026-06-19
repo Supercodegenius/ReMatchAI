@@ -58,7 +58,7 @@ def _demo_dialog_body() -> None:
     st.markdown(
         """
 In order to book a demo of the tool or for download options of your matched data, please get in touch with the BrainCal Tech on
-`braincaldemos@gmail.com` or `surabhi.singh@braincal.com`.
+`braincaldemo@gmail.com` or `surabhi.singh@braincal.com`.
 
 Thanks for your interest!!
 """.strip()
@@ -89,6 +89,11 @@ if _open_demo_dialog:
 # 🔥 HTML MUST START AT COLUMN 0 — NO INDENTATION AT ALL
 st.markdown(
 f"""
+        <title>AI Name Matching for Reinsurance | RematchingAI</title>
+        <meta name="description" content="RematchingAI delivers award-winning AI name matching and entity resolution for reinsurers, brokers, and insurers. Improve data quality, reduce duplication, and automate bordereaux and compliance workflows.">
+        <meta name="keywords" content="AI name matching, entity resolution, reinsurance automation, insurance data quality, bordereaux automation, KYC AML screening, fuzzy matching, insured name matching">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="https://rematchingai.com/">
 <section class="landing-shell">
 <nav class="landing-nav">
 <div class="brand-wrap">
@@ -97,7 +102,8 @@ f"""
 <span class="brand-tagline">AI-Powered Insured Name Matching for Reinsurance</span>
 </div>
 <div class="nav-cta">
-<a class="cta-btn" href="?page=landing&demo=1" target="_self">Book a Demo</a>
+<a class="cta-btn" href="?page=landing&demo=1" target="_self">Get in Touch</a>
+<a class="cta-btn" href="https://cal.com/rematchingai/30mins?overlayCalendar=true" target="_blank">Book a Demo</a>
 <a class="cta-btn" href="?page=matcher" target="_self">Tool Play</a>
 </div>
 </nav>

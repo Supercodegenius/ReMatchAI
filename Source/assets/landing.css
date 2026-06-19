@@ -85,9 +85,9 @@ div[data-testid="stMainBlockContainer"],
 /* CTA buttons */
 .nav-cta {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.55rem;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .cta-btn {

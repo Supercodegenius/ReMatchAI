@@ -506,15 +506,14 @@ def _slm_lexical_guard_passes(a: str, b: str) -> bool:
 
     # Multi-token names with zero shared tokens need high character-level similarity.
     # This prevents false positives like "volvo cars" matching "viola art".
-    if overlap == 0 and len(tokens_a) > 1 and len(tokens_b) > 1:
-        return seq_ratio >= 0.65
+    if overlap == 0:
+        if len(tokens_a) == 1 and len(tokens_b) == 1:
+            return seq_ratio >= 0.72
+        if len(tokens_a) > 1 and len(tokens_b) > 1:
+            return seq_ratio >= 0.65
+        return seq_ratio >= 0.58
 
-    overlap_ratio = (
-        overlap / max(1, min(len(tokens_a), len(tokens_b)))
-        if tokens_a and tokens_b
-        else 0.0
-    )
-    return not (seq_ratio < 0.45 and overlap == 0 and overlap_ratio == 0.0)
+    return True
 
 
 @lru_cache(maxsize=1)
@@ -1517,20 +1516,32 @@ def match_names(
 
                 ann_hits = ann_best_map.get(src_query_n)
                 if ann_hits is not None:
+                    fallback_idx = -1
+                    fallback_score = -1.0
                     for best_idx, ann_score in ann_hits:
                         if not (0 <= best_idx < len(target_originals)):
                             continue
                         candidate_target_norm = target_normalized[best_idx]
                         if candidate_target_norm in rejected_targets:
                             continue
-                        best_slm_score = ann_score
-                        if best_slm_score < -1.0:
-                            best_slm_score = -1.0
-                        elif best_slm_score > 1.0:
-                            best_slm_score = 1.0
-                        best_name = target_originals[best_idx]
-                        best_target_norm = candidate_target_norm
-                        break
+                        if fallback_idx < 0:
+                            fallback_idx = best_idx
+                            fallback_score = ann_score
+                        if _slm_lexical_guard_passes(src_query_n, candidate_target_norm):
+                            best_slm_score = ann_score
+                            best_name = target_originals[best_idx]
+                            best_target_norm = candidate_target_norm
+                            break
+
+                    if not best_name and fallback_idx >= 0:
+                        best_slm_score = fallback_score
+                        best_name = target_originals[fallback_idx]
+                        best_target_norm = target_normalized[fallback_idx]
+
+                    if best_slm_score < -1.0:
+                        best_slm_score = -1.0
+                    elif best_slm_score > 1.0:
+                        best_slm_score = 1.0
 
                 if not best_name:
                     candidate_indices = candidate_map.get(src_query_n, all_indices)
@@ -1562,16 +1573,28 @@ def match_names(
                         sorted_positions = torch.argsort(similarities, descending=True)
 
                         best_idx = -1
+                        fallback_idx = -1
+                        fallback_score = -1.0
                         for pos_tensor in sorted_positions:
                             best_pos = int(pos_tensor.item())
                             candidate_idx = candidate_indices[best_pos]
                             candidate_target_norm = target_normalized[candidate_idx]
                             if candidate_target_norm in rejected_targets:
                                 continue
-                            best_idx = candidate_idx
-                            best_target_norm = candidate_target_norm
-                            best_slm_score = float(similarities[best_pos].item())
-                            break
+                            candidate_score = float(similarities[best_pos].item())
+                            if fallback_idx < 0:
+                                fallback_idx = candidate_idx
+                                fallback_score = candidate_score
+                            if _slm_lexical_guard_passes(src_query_n, candidate_target_norm):
+                                best_idx = candidate_idx
+                                best_target_norm = candidate_target_norm
+                                best_slm_score = candidate_score
+                                break
+
+                        if best_idx < 0 and fallback_idx >= 0:
+                            best_idx = fallback_idx
+                            best_target_norm = target_normalized[fallback_idx]
+                            best_slm_score = fallback_score
 
                         if best_idx < 0:
                             best_slm_score = -1.0

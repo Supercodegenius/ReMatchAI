@@ -7,6 +7,7 @@ from Myrepo.name_matching import (
     match_names,
     normalize_name,
 )
+from Source.namematching import _slm_lexical_guard_passes
 
 
 def test_normalize_name_basic():
@@ -137,3 +138,13 @@ def test_match_names_ai_advanced_best_match_thresholding():
     assert john_row["matched_name"] == "john smith"
     assert int(john_row["score"]) >= 80
     assert bool(john_row["is_match"]) is True
+
+
+def test_slm_lexical_guard_single_token_zero_overlap_is_strict():
+    assert _slm_lexical_guard_passes("soares", "sport4kids") is False
+    assert _slm_lexical_guard_passes("microsoft", "microsof") is True
+
+
+def test_slm_lexical_guard_multi_token_zero_overlap_floor():
+    assert _slm_lexical_guard_passes("volvo cars", "viola art") is False
+    assert _slm_lexical_guard_passes("acme holdings", "ace holdings") is True

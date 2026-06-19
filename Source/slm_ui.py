@@ -229,14 +229,27 @@ def _lexical_guard_metrics(text_a: str, text_b: str) -> dict[str, float | int]:
 
 def classify_pair(score: float, threshold: float, scored_a: str, scored_b: str) -> str:
     metrics = _lexical_guard_metrics(scored_a, scored_b)
+    a = str(scored_a or "").strip().lower()
+    b = str(scored_b or "").strip().lower()
 
-    # Guardrail: block obvious false positives from high embedding similarity.
-    if (
-        metrics["sequence_ratio"] < 0.45
-        and metrics["token_overlap_count"] == 0
-        and metrics["token_overlap_ratio"] == 0.0
-    ):
-        return "NO MATCH"
+    # Mirror matcher-side lexical guard so trace verdicts are consistent.
+    if len(a) <= 2 or len(b) <= 2:
+        if a != b:
+            return "NO MATCH"
+        return classify_score(score, threshold)
+
+    tokens_a = {tok for tok in a.split() if tok}
+    tokens_b = {tok for tok in b.split() if tok}
+    seq_ratio = float(metrics["sequence_ratio"])
+    overlap_count = int(metrics["token_overlap_count"])
+
+    if overlap_count == 0:
+        if len(tokens_a) == 1 and len(tokens_b) == 1 and seq_ratio < 0.72:
+            return "NO MATCH"
+        if len(tokens_a) > 1 and len(tokens_b) > 1 and seq_ratio < 0.65:
+            return "NO MATCH"
+        if (len(tokens_a) == 1) != (len(tokens_b) == 1) and seq_ratio < 0.58:
+            return "NO MATCH"
 
     return classify_score(score, threshold)
 
@@ -259,11 +272,7 @@ def score_pair_with_trace(
     score = max(-1.0, min(1.0, float((emb_a * emb_b).sum().item())))
     prediction = classify_pair(score, threshold, scored_a, scored_b)
     lexical_metrics = _lexical_guard_metrics(scored_a, scored_b)
-    guard_triggered = (
-        lexical_metrics["sequence_ratio"] < 0.45
-        and lexical_metrics["token_overlap_count"] == 0
-        and lexical_metrics["token_overlap_ratio"] == 0.0
-    )
+    guard_triggered = prediction == "NO MATCH" and classify_score(score, threshold) == "MATCH"
 
     trace_lines = list(prepared["trace_lines"])
     trace_lines.extend(

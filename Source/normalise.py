@@ -1,4 +1,8 @@
+# Build with AI: AI-Powered Name Matching
+# Dashboards with Streamlit
+# Name Matching UI Building with Streamlit and Python
 
+# Developed By Ambuj Kumar
 
 LEGAL_SUFFIXES = [
     "ltd", "limited", "plc", "llc", "inc", "corp", "co", "company",

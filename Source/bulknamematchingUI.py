@@ -148,7 +148,7 @@ def _resolve_source_folder(raw: str) -> tuple[str, str | None]:
     demo_source_folder = os.path.join(workspace_root, "Source", "demo_data")
     legacy_paths = {
         os.path.normcase(os.path.normpath(r"C:\NameMatchDemo\BulkNameMatching")),
-        os.path.normcase(os.path.normpath(r"C:\NameMatchDemo\BulkNameMatching\")),
+        os.path.normcase(os.path.normpath("C:\\NameMatchDemo\\BulkNameMatching\\")),
     }
 
     if (

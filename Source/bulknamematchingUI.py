@@ -136,36 +136,6 @@ def _normalise_folder_path(raw: str) -> str:
         return raw.strip()
 
 
-def _resolve_source_folder(raw: str) -> tuple[str, str | None]:
-    """Resolve source folder and auto-map legacy demo paths when possible."""
-    resolved = _normalise_folder_path(raw)
-    if not resolved:
-        return "", None
-    if os.path.isdir(resolved):
-        return resolved, None
-
-    workspace_root = os.path.dirname(os.path.dirname(__file__))
-    demo_source_folder = os.path.join(workspace_root, "Source", "demo_data")
-    legacy_paths = {
-        os.path.normcase(os.path.normpath(r"C:\NameMatchDemo\BulkNameMatching")),
-        os.path.normcase(os.path.normpath("C:\\NameMatchDemo\\BulkNameMatching\\")),
-    }
-
-    if (
-        os.path.normcase(os.path.normpath(resolved)) in legacy_paths
-        and os.path.isdir(demo_source_folder)
-    ):
-        return (
-            demo_source_folder,
-            (
-                "Legacy demo path detected. "
-                f"Using local demo folder instead: `{demo_source_folder}`"
-            ),
-        )
-
-    return resolved, None
-
-
 st.markdown("### 1 · File Configuration")
 conf_c1, conf_c2 = st.columns(2, gap="large")
 with conf_c1:
@@ -175,11 +145,9 @@ with conf_c1:
         help=r"Full path to the folder containing CSV / XLSX source files. Example: C:\Users\me\source_files",
         key="bulk_source_folder",
     )
-    source_folder, source_folder_note = _resolve_source_folder(_src_raw)
+    source_folder: str = _normalise_folder_path(_src_raw)
     if _src_raw.strip():
         st.caption(f"📂 Path received: `{_src_raw.strip()}` → resolved: `{source_folder}` → exists: `{os.path.isdir(source_folder)}`")
-        if source_folder_note:
-            st.info(source_folder_note)
     else:
         st.caption("Enter the full path to your source folder above.")
 with conf_c2:
@@ -348,9 +316,6 @@ if not source_files:
         st.info(f"No CSV or XLSX files found in `{source_folder}`.")
     elif source_folder:
         st.warning(f"Folder not found: `{source_folder}` — check the path above.")
-        _demo_hint = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Source", "demo_data")
-        if os.path.isdir(_demo_hint):
-            st.caption(f"Try this demo folder: `{_demo_hint}`")
     else:
         st.info("Enter a **Source Folder Path** above to list files.")
 else:

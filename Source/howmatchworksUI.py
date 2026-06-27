@@ -128,7 +128,7 @@ html(
               .hm-shell {
                 width: min(78rem, 100%);
                 margin: 0 auto;
-                padding: 1.1rem 1rem 1.25rem;
+                padding: 1.1rem 1rem 0.2rem;
                 position: relative;
                 overflow: hidden;
               }
@@ -197,7 +197,7 @@ html(
               .hm-back-row {
                 position: relative;
                 z-index: 1;
-                margin-top: 1.1rem;
+                margin-top: 0;
                 display: flex;
                 justify-content: center;
               }
@@ -245,6 +245,14 @@ html(
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                margin-bottom: 0;
+                flex: 0 0 auto;
+              }
+
+              .hm-card-head {
+                display: flex;
+                align-items: center;
+                gap: 0.72rem;
                 margin-bottom: 0.88rem;
               }
 
@@ -372,32 +380,40 @@ html(
 
               <div class="hm-grid">
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-mark">&#10003;</span></div>
-                  <h2 class="hm-card-title">Multi-Method Matching Engine</h2>
+                  <div class="hm-card-head">
+                    <div class="hm-icon"><span class="hm-icon-mark">&#10003;</span></div>
+                    <h2 class="hm-card-title">Multi-Method Matching Engine</h2>
+                  </div>
                   <p class="hm-card-text">
-                    <span class="hm-highlight">6 algorithms</span> for unparalleled accuracy. Exact, Fuzzy, Soundex, Jaro-Winkler, Levenshtein &amp; AIMatch
+                    <span class="hm-highlight">7 algorithms</span> for unparalleled accuracy. ENCCLT, FNCCLT, SNCCLT, JNCCLT, LNCCLT, AINCCLT, and SLM methods.
                   </p>
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-star">&#10038;</span></div>
-                  <h2 class="hm-card-title">AI-Powered Learning</h2>
+                  <div class="hm-card-head">
+                    <div class="hm-icon"><span class="hm-icon-star">&#10038;</span></div>
+                    <h2 class="hm-card-title">AI-Powered Learning</h2>
+                  </div>
                   <p class="hm-card-text">
                     Continuously improve based on your specific data patterns
                   </p>
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-sliders">&#9783;</span></div>
-                  <h2 class="hm-card-title">Adjustable Match Thresholds</h2>
+                  <div class="hm-card-head">
+                    <div class="hm-icon"><span class="hm-icon-sliders">&#9783;</span></div>
+                    <h2 class="hm-card-title">Adjustable Match Thresholds</h2>
+                  </div>
                   <p class="hm-card-text">
                     Fine-tune confidence levels to suit your risk appetite
                   </p>
                 </article>
 
                 <article class="hm-col">
-                  <div class="hm-icon"><span class="hm-icon-bars">&#9637;</span></div>
-                  <h2 class="hm-card-title">Built In Detail For Scale</h2>
+                  <div class="hm-card-head">
+                    <div class="hm-icon"><span class="hm-icon-bars">&#9637;</span></div>
+                    <h2 class="hm-card-title">Built In Detail For Scale</h2>
+                  </div>
                   <p class="hm-card-text">
                     50,000 records matched in seconds. Other tools take 5-10 for the same task
                   </p>
@@ -454,7 +470,7 @@ st.markdown(
           div[data-testid="stButton"] {
             display: flex;
             justify-content: center;
-            margin: 0.18rem 0 0.95rem;
+            margin: 0;
           }
 
           div[data-testid="stButton"] button[kind="primary"][data-testid="stBaseButton-primary"] {

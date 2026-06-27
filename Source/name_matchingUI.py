@@ -338,14 +338,16 @@ st.markdown(
         font-weight: 700;
       }
       .nm-muted { color: var(--nm-muted); opacity: 1; }
-      .stButton > button[kind="primary"] {
+            .stButton > button[kind="primary"],
+            .stDownloadButton > button[kind="primary"] {
         border: 0;
         border-radius: 0.6rem;
         background: linear-gradient(90deg, #143f98 0%, #1e54bc 100%);
         color: #f6faff;
         box-shadow: 0 8px 18px rgba(20, 63, 152, 0.28);
       }
-      .stButton > button[kind="primary"]:hover {
+            .stButton > button[kind="primary"]:hover,
+            .stDownloadButton > button[kind="primary"]:hover {
         filter: brightness(1.03);
       }
       .nm-footer {
@@ -577,6 +579,13 @@ def _slm_health_status() -> dict[str, object]:
 def _slm_matching_available() -> tuple[bool, str | None]:
     health = _slm_health_status()
     return bool(health.get("ready", False)), health.get("reason")
+
+
+def _method_threshold_label(method_label: str, metric: str) -> str:
+    method_prefix = (method_label or "").split()[0].strip()
+    if not method_prefix:
+        method_prefix = "Match"
+    return f"{method_prefix} {metric}"
 
 
 def _parse_ctx_value(app_context: str, key: str) -> str:
@@ -866,6 +875,32 @@ def read_table(uploaded_file):
         del cache[oldest_key]
 
     return df
+
+
+def _build_sanitizer_download_payload(
+    source_df: pd.DataFrame,
+    source_filename: str,
+    selected_column: str,
+    sanitized_values: pd.Series,
+) -> tuple[bytes, str, str]:
+    export_df = source_df.copy()
+    sanitized_column_name = "Sanitised"
+    insert_at = export_df.columns.get_loc(selected_column) + 1
+    export_df.insert(insert_at, sanitized_column_name, sanitized_values.fillna("").astype(str))
+
+    base_name, extension = os.path.splitext(source_filename)
+    if extension.lower() == ".csv":
+        return export_df.to_csv(index=False).encode("utf-8"), f"{base_name}_sanitised.csv", "text/csv"
+
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        export_df.to_excel(writer, index=False)
+    buffer.seek(0)
+    return (
+        buffer.getvalue(),
+        f"{base_name}_sanitised.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 RE_NEWLINES = re.compile(r"[\r\n]+")
@@ -1285,9 +1320,9 @@ if sidebar_menu == "Bulk Name Matching":
                 st.caption(slm_unavailable_reason)
 
             if _bulk_method_sel in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "Vector Similarity (SLM)", "SLM Adaptive Match"}:
-                st.slider("Fuzzy threshold", 0, 100, 75, 1, key="bulk_threshold")
+                st.slider(_method_threshold_label(_bulk_method_sel, "threshold"), 0, 100, 75, 1, key="bulk_threshold")
             if _bulk_method_sel == "LNCCLT Match":
-                st.slider("Levenshtein max distance", 0, 10, 2, 1, key="bulk_lev_distance")
+                st.slider(_method_threshold_label(_bulk_method_sel, "max distance"), 0, 10, 2, 1, key="bulk_lev_distance")
                 st.selectbox(
                     "Levenshtein engine",
                     ["Auto", "RapidFuzz", "Python"],
@@ -1335,9 +1370,9 @@ with st.sidebar:
         lev_max_distance = 2
         lev_engine = "auto"
         if method in {"FNCCLT Match", "JNCCLT Match", "AINCCLT Match", "SLM Match", "Vector Similarity (SLM)", "SLM Adaptive Match"}:
-            threshold = st.slider("Fuzzy threshold", 0, 100, 75, 1)
+            threshold = st.slider(_method_threshold_label(method, "threshold"), 0, 100, 75, 1)
         if method == "LNCCLT Match":
-            lev_max_distance = st.slider("Levenshtein max distance", 0, 10, 2, 1)
+            lev_max_distance = st.slider(_method_threshold_label(method, "max distance"), 0, 10, 2, 1)
             lev_engine = st.selectbox(
                 "Levenshtein engine",
                 ["Auto", "RapidFuzz", "Python"],
@@ -1461,6 +1496,7 @@ if sidebar_menu == "Data Upload":
             with preview_col:
                 preview_clicked = st.button(
                     "Data Preview",
+                    type="primary",
                     use_container_width=True,
                     disabled=not _is_control_enabled("data_preview_button"),
                 )
@@ -1471,7 +1507,7 @@ if sidebar_menu == "Data Upload":
     else:
         st.info("Choose a CSV/XLSX file.")
 
-    button_col_1, button_col_2 = st.columns(2, gap="small")
+    button_col_1, button_col_2, button_col_3 = st.columns(3, gap="small")
     with button_col_1:
         back_to_landing = st.button(
             "Back to Landing",
@@ -1490,49 +1526,91 @@ if sidebar_menu == "Data Upload":
                 or not _is_control_enabled("data_upload_button")
             ),
         )
-    
+    with button_col_3:
+        st.download_button(
+            "Download Sanitized File",
+            data=st.session_state.get("smart_sanitizer_download_bytes", b""),
+            file_name=st.session_state.get("smart_sanitizer_download_name", "sanitised_output.csv"),
+            mime=st.session_state.get(
+                "smart_sanitizer_download_mime",
+                "text/csv",
+            ),
+            type="primary",
+            use_container_width=True,
+            disabled=not st.session_state.get("smart_sanitizer_result_ready", False),
+            key="data_upload_download_button",
+        )
+
     if back_to_landing:
         st.query_params["page"] = "landing"
         st.rerun()
-    if upload_button_clicked and uploaded_source_file is not None and source_upload_df is not None:
-        if not any(
-            [
-                sanitize_accented,
-                sanitize_newlines_spaces,
-                sanitize_english_punct,
-                sanitize_special_chars,
-                sanitize_cjk,
-            ]
-        ):
-            st.warning("Select at least one sanitizer option before running Smart Sanitizer.")
-            st.stop()
+    if upload_button_clicked:
+        st.session_state["smart_sanitizer_run_requested"] = True
+        st.rerun()
 
-        cleaned_df = source_upload_df.copy()
-        cleaned_df[selected_sanitizer_column] = _sanitize_selected_column(
-            cleaned_df[selected_sanitizer_column],
-            remove_accented=sanitize_accented,
-            normalize_spaces=sanitize_newlines_spaces,
-            remove_english_punctuation=sanitize_english_punct,
-            remove_special_characters=sanitize_special_chars,
-            remove_cjk=sanitize_cjk,
+    if uploaded_source_file is not None and source_upload_df is not None:
+        if st.session_state.get("smart_sanitizer_last_source_name") != uploaded_source_file.name:
+            for session_key in (
+                "smart_sanitizer_output_df",
+                "smart_sanitizer_download_bytes",
+                "smart_sanitizer_download_name",
+                "smart_sanitizer_download_mime",
+                "smart_sanitizer_preview_df",
+                "smart_sanitizer_result_ready",
+            ):
+                st.session_state.pop(session_key, None)
+            st.session_state["smart_sanitizer_last_source_name"] = uploaded_source_file.name
+
+        if st.session_state.get("smart_sanitizer_run_requested"):
+            if not any(
+                [
+                    sanitize_accented,
+                    sanitize_newlines_spaces,
+                    sanitize_english_punct,
+                    sanitize_special_chars,
+                    sanitize_cjk,
+                ]
+            ):
+                st.warning("Select at least one sanitizer option before running Smart Sanitizer.")
+                st.stop()
+
+            sanitized_values = _sanitize_selected_column(
+                source_upload_df[selected_sanitizer_column],
+                remove_accented=sanitize_accented,
+                normalize_spaces=sanitize_newlines_spaces,
+                remove_english_punctuation=sanitize_english_punct,
+                remove_special_characters=sanitize_special_chars,
+                remove_cjk=sanitize_cjk,
+            )
+            cleaned_df = source_upload_df.copy()
+            cleaned_df[selected_sanitizer_column] = sanitized_values
+            download_bytes, download_name, download_mime = _build_sanitizer_download_payload(
+                source_upload_df,
+                uploaded_source_file.name,
+                selected_sanitizer_column,
+                sanitized_values,
+            )
+            preview_df = pd.DataFrame(
+                {
+                    "Original": source_upload_df[selected_sanitizer_column].fillna("").astype(str).head(20),
+                    "Sanitized": sanitized_values.fillna("").astype(str).head(20),
+                }
+            )
+
+            st.session_state["smart_sanitizer_output_df"] = cleaned_df
+            st.session_state["smart_sanitizer_download_bytes"] = download_bytes
+            st.session_state["smart_sanitizer_download_name"] = download_name
+            st.session_state["smart_sanitizer_download_mime"] = download_mime
+            st.session_state["smart_sanitizer_preview_df"] = preview_df
+            st.session_state["smart_sanitizer_result_ready"] = True
+            st.session_state["smart_sanitizer_run_requested"] = False
+            st.rerun()
+
+    if st.session_state.get("smart_sanitizer_result_ready") and "smart_sanitizer_preview_df" in st.session_state:
+        st.success(
+            f"Smart Sanitizer completed for column `{st.session_state.get('smart_sanitizer_selected_column', '')}`."
         )
-        st.session_state["smart_sanitizer_output_df"] = cleaned_df
-
-        preview_df = pd.DataFrame(
-            {
-                "Original": source_upload_df[selected_sanitizer_column].fillna("").astype(str).head(20),
-                "Sanitized": cleaned_df[selected_sanitizer_column].fillna("").astype(str).head(20),
-            }
-        )
-
-        # with st.spinner("Saving uploaded data to DB..."):
-        #     upload_id, saved_row_count = _save_data_upload_to_db(
-        #         source_upload_df,
-        #         mapping_df,
-        #         uploaded_source_file.name,
-        #     )
-        st.success(f"Smart Sanitizer completed for column `{selected_sanitizer_column}`.")
-        st.dataframe(preview_df, use_container_width=True)
+        st.dataframe(st.session_state["smart_sanitizer_preview_df"], use_container_width=True)
         st.caption("DB save flow is temporarily disabled.")
 
     st.markdown("Switch to **Name Matching** from the left menu to run matching.")

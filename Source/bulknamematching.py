@@ -5,6 +5,7 @@
 import os
 import pandas as pd
 from io import BytesIO
+from collections import defaultdict
 from typing import Optional
 
 
@@ -119,6 +120,7 @@ def process_single_file(
     fuzzy_threshold: int = 75,
     lev_max_distance: int = 2,
     lev_engine: str = "auto",
+    location_threshold: int = 85,
     target_names: Optional[list[str]] = None,
     target_loc_lookup: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
@@ -126,7 +128,19 @@ def process_single_file(
     Load a single source file, run name matching against target_df,
     and return the enriched output DataFrame.
     """
-    from Source.namematching import match_names
+    from Source.namematching import (
+        load_match_feedback,
+        match_names,
+        normalize_name,
+        fuzzy_score,
+    )
+
+    try:
+        from rapidfuzz import fuzz as rf_fuzz
+        from rapidfuzz import process as rf_process
+    except Exception:
+        rf_fuzz = None
+        rf_process = None
 
     source_df = read_source_file(source_path)
 
@@ -142,14 +156,92 @@ def process_single_file(
     else:
         tgt_names = target_names
 
-    match_df = match_names(
-        src_names,
-        tgt_names,
-        method=method,
-        fuzzy_threshold=fuzzy_threshold,
-        lev_max_distance=lev_max_distance,
-        lev_engine=lev_engine,
+    feedback_db_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "outputs",
+        "match_feedback.db",
     )
+    feedback = load_match_feedback(feedback_db_path)
+
+    use_location_staging = (
+        bool(src_loc_col)
+        and bool(tgt_loc_col)
+        and src_loc_col in source_df.columns
+        and tgt_loc_col in target_df.columns
+    )
+
+    if use_location_staging:
+        src_locs = source_df[src_loc_col].fillna("").astype(str).str.strip().tolist()
+        tgt_locs = target_df[tgt_loc_col].fillna("").astype(str).str.strip().tolist()
+        tgt_locs_norm = [normalize_name(v) for v in tgt_locs]
+
+        all_tgt_indices = list(range(len(tgt_names)))
+        tgt_loc_to_indices: dict[str, list[int]] = defaultdict(list)
+        for idx, loc in enumerate(tgt_locs_norm):
+            tgt_loc_to_indices[loc].append(idx)
+        unique_tgt_locs = list(tgt_loc_to_indices.keys())
+
+        src_loc_to_rows: dict[str, list[int]] = defaultdict(list)
+        src_locs_norm = [normalize_name(v) for v in src_locs]
+        for row_idx, loc in enumerate(src_locs_norm):
+            src_loc_to_rows[loc].append(row_idx)
+
+        row_payloads: list[dict] = [{} for _ in src_names]
+        for src_loc_norm, row_indices in src_loc_to_rows.items():
+            if src_loc_norm:
+                matched_tgt_indices: list[int] = []
+                if rf_process is not None and rf_fuzz is not None:
+                    hits = rf_process.extract(
+                        src_loc_norm,
+                        unique_tgt_locs,
+                        scorer=rf_fuzz.ratio,
+                        processor=None,
+                        score_cutoff=location_threshold,
+                        limit=None,
+                    )
+                    for _, _, hit_pos in hits:
+                        matched_tgt_indices.extend(
+                            tgt_loc_to_indices[unique_tgt_locs[int(hit_pos)]]
+                        )
+                else:
+                    matched_tgt_indices = [
+                        j
+                        for j, tgt_loc_norm in enumerate(tgt_locs_norm)
+                        if tgt_loc_norm and fuzzy_score(src_loc_norm, tgt_loc_norm) >= location_threshold
+                    ]
+                candidate_tgt_indices = (
+                    matched_tgt_indices if matched_tgt_indices else all_tgt_indices
+                )
+            else:
+                candidate_tgt_indices = all_tgt_indices
+
+            group_src = [src_names[i] for i in row_indices]
+            group_tgt = [tgt_names[j] for j in candidate_tgt_indices]
+            sub_df = match_names(
+                group_src,
+                group_tgt,
+                method=method,
+                fuzzy_threshold=fuzzy_threshold,
+                lev_max_distance=lev_max_distance,
+                lev_engine=lev_engine,
+                feedback=feedback,
+            )
+
+            for sub_pos, src_row_idx in enumerate(row_indices):
+                row_payloads[src_row_idx] = sub_df.iloc[sub_pos].to_dict()
+
+        match_df = pd.DataFrame(row_payloads)
+    else:
+        match_df = match_names(
+            src_names,
+            tgt_names,
+            method=method,
+            fuzzy_threshold=fuzzy_threshold,
+            lev_max_distance=lev_max_distance,
+            lev_engine=lev_engine,
+            feedback=feedback,
+        )
 
     return build_output_dataframe(
         source_df,

@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 from difflib import SequenceMatcher
 
@@ -392,10 +392,12 @@ threshold = st.slider(
 )
 apply_normalization = st.checkbox("Apply normalization before scoring", value=True)
 
-single_tab, batch_tab, calibration_tab = st.tabs([
+single_tab, batch_tab, calibration_tab, learning_tab, advanced_tab = st.tabs([
     "Single Pair Test",
     "Batch CSV Test",
     "Threshold Calibration",
+    "Feedback Learning",
+    "Explain & Hierarchy",
 ])
 
 with single_tab:
@@ -578,3 +580,117 @@ if trace_result is not None:
             st.markdown("**Name B embedding debug**")
             st.json(debug.get("name_b", {}))
 
+
+
+with learning_tab:
+    from Source import feedback_learning as fl
+
+    st.subheader("Learn from reviewer feedback")
+    st.caption(
+        "Approved/rejected matches become training pairs (plus mined hard negatives). "
+        "A candidate model is fine-tuned from the live one, scored on a fixed holdout, "
+        "and only promoted if it is not worse. The previous model is backed up for rollback."
+    )
+    labels_df = fl.load_feedback_labels()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Feedback labels", len(labels_df))
+    c2.metric("Approved", int((labels_df["label"] == 1).sum()) if len(labels_df) else 0)
+    c3.metric("New since last train", fl.new_labels_since_last_train())
+
+    lc1, lc2, lc3 = st.columns(3)
+    min_labels = lc1.number_input("Min labels required", 5, 1000, 10)
+    epochs = lc2.number_input("Epochs", 1, 10, 3)
+    lr = lc3.select_slider("Learning rate", options=[5e-6, 1e-5, 2e-5, 5e-5], value=1e-5)
+
+    if st.button("Retrain candidate from feedback", type="primary"):
+        with st.spinner("Fine-tuning candidate model..."):
+            try:
+                st.session_state["fl_result"] = fl.retrain_candidate(int(epochs), float(lr), int(min_labels))
+            except Exception as exc:
+                st.session_state["fl_result"] = {"status": "error", "reason": str(exc)}
+
+    res = st.session_state.get("fl_result")
+    if res:
+        if res["status"] in ("skipped", "error"):
+            st.warning(res["reason"])
+        else:
+            cand, live = res["candidate"], res.get("live")
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Candidate F1", f"{cand['f1']:.3f}", None if not live else f"{cand['f1'] - live['f1']:+.3f} vs live")
+            m2.metric("Live F1", "n/a" if not live else f"{live['f1']:.3f}")
+            m3.metric("New threshold", f"{cand['threshold']:.3f}")
+            st.caption(f"Train rows {res['train_rows']} | holdout {res['holdout_rows']}")
+            if res["better"]:
+                st.success("Candidate is at least as good as the live model.")
+            else:
+                st.error("Candidate is worse than the live model; promotion blocked.")
+                for issue in res.get("slice_issues", []):
+                    st.caption(f"Slice regression: {issue}")
+            if res.get("slices"):
+                st.dataframe(pd.DataFrame(res["slices"]), use_container_width=True)
+            if st.button("Promote candidate to live", disabled=not res["better"]):
+                out = fl.promote_candidate()
+                st.session_state["fl_result"] = None
+                st.success(f"Promoted. Backup: {out.get('backup')}. Reload the app to use the new model.")
+                st.cache_resource.clear()
+
+    backups = fl.list_backups()
+    if backups:
+        st.markdown("**Rollback**")
+        pick = st.selectbox("Backup", backups)
+        if st.button("Restore selected backup"):
+            st.success(f"Restored {fl.rollback(pick)['restored']}")
+            st.cache_resource.clear()
+
+    hist = fl.load_history()
+    if hist:
+        st.markdown("**History**")
+        st.dataframe(pd.DataFrame(hist)[["timestamp", "status"]].tail(20), use_container_width=True)
+
+
+with advanced_tab:
+    from Source import slm_advanced as adv
+
+    st.subheader("Explain, re-rank, hierarchy and calibration")
+    ca, cb = st.columns(2)
+    xa = ca.text_input("Source name", "Swiss Re Europe SA", key="adv_a")
+    xb = cb.text_input("Candidate name", "Swiss Re Asia Ltd", key="adv_b")
+    ex = adv.explain(xa, xb)
+    st.write({"core overlap": ex["core_overlap"], "attribute penalty": ex["attribute_penalty"],
+              "same parent": ex["same_parent"]})
+    for note in ex["notes"]:
+        st.markdown(f"- {note}")
+    if st.button("Ask LLM judge (needs OPENAI_API_KEY)"):
+        st.json(adv.llm_judge(xa, xb) or {"info": "LLM unavailable"})
+
+    st.markdown("**Parent / group hierarchy**")
+    names_in = st.text_area("Names (one per line)", "Swiss Re Europe SA\nSwiss Re Asia Ltd\nSwiss Re AG\nMunich Re", key="adv_names")
+    nl = [n for n in names_in.splitlines() if n.strip()]
+    if nl:
+        st.dataframe(adv.build_hierarchy(nl), use_container_width=True)
+        if st.button("Generate augmented training pairs"):
+            aug = adv.augment_pairs(nl)
+            st.dataframe(aug, use_container_width=True)
+            st.download_button("Download pairs CSV", aug.to_csv(index=False), "augmented_pairs.csv")
+
+    st.markdown("**Persisted vector index**")
+    idx_names = st.text_area("Names to index (one per line; defaults to the list above)", "", key="adv_idx")
+    if st.button("Build / refresh index with live model"):
+        pool = [n for n in (idx_names or names_in).splitlines() if n.strip()]
+        st.success(f"Indexed {adv.build_index_from_model(pool)} names to outputs/slm_index")
+    loaded = adv.load_index()
+    if loaded:
+        q = st.text_input("Search index", "Swiss Re", key="adv_q")
+        qv = adv.embed_names([q], Path("outputs/biencoder"))[0]
+        st.dataframe(pd.DataFrame(adv.search_index(qv, *loaded, k=5), columns=["name", "similarity"]))
+
+    st.markdown("**Calibration and review band** (uses feedback-scored pairs CSV: score,label)")
+    up = st.file_uploader("Scored pairs CSV", type="csv", key="adv_cal")
+    if up is not None:
+        cdf = pd.read_csv(up)
+        if {"score", "label"} <= set(cdf.columns):
+            band = adv.review_band(cdf["score"], cdf["label"])
+            cal = adv.fit_calibrator(cdf["score"], cdf["label"])
+            st.json({**band, "calibration": cal})
+        else:
+            st.warning("CSV needs columns: score, label")

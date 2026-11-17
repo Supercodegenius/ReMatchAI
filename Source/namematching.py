@@ -124,23 +124,22 @@ def _canonicalize_terminal_legal_suffix(text: str) -> str:
         break
     return " ".join(tokens)
 
-_LEGAL_SUFFIXES = {
-    "ltd", "limited", "plc", "llc", "inc", "corp", "co", "company",
-    "ag", "sa", "spa", "gmbh", "bv", "nv", "oy", "ab",
-    "pte", "pvt", "kg", "kgaa", "sas", "sarl", "llp", "lp",
+_TRANSLIT_ALIASES = {
+    "muenchener": "munchener", "rueck": "ruck", "rueckversicherung": "ruckversicherung",
+    "rueckversicherungs": "ruckversicherungs", "zuerich": "zurich", "koeln": "koln",
+    "duesseldorf": "dusseldorf", "nuernberg": "nurnberg", "fuer": "fur", "ueber": "uber",
 }
-
 
 @lru_cache(maxsize=250000)
 def _normalize_name_cached(raw_text: str) -> str:
-    text = raw_text.strip().lower()
+    text = raw_text.strip().lower().replace("ß", "ss")
     text = _DASH_RE.sub(" ", text)  # replace hyphens/dashes with space before encoding
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     text = _NON_ALNUM_SPACE_RE.sub(" ", text)
     text = _WHITESPACE_RE.sub(" ", text).strip()
+    text = " ".join(_TRANSLIT_ALIASES.get(tok, tok) for tok in text.split())
     text = _canonicalize_terminal_legal_suffix(text)
-    tokens = [t for t in text.split() if t not in _LEGAL_SUFFIXES]
-    return " ".join(tokens)
+    return text
 
 
 def normalize_name(value: str) -> str:
@@ -1624,6 +1623,33 @@ def match_names(
                 }
 
             results.append({"source_name": src, **best_cache[src_n]})
+
+        # --- explainability, attribute checks and review routing (best-effort) ---
+        try:
+            try:
+                from Source import slm_advanced as _adv
+            except ImportError:
+                import slm_advanced as _adv
+            _band = _adv.load_band()
+            for _r in results:
+                _m = _r.get("matched_name") or ""
+                if not _m:
+                    _r.update(slm_explanation="", slm_attr_penalty=0.0, slm_same_parent=False, slm_decision="no_match")
+                    continue
+                _e = _adv.explain(_r["source_name"], _m, _r.get("slm_raw_score"))
+                _r["slm_explanation"] = "; ".join(_e["notes"])
+                _r["slm_attr_penalty"] = _e["attribute_penalty"]
+                _r["slm_same_parent"] = _e["same_parent"]
+                if _r.get("slm_stage") == "feedback_confirmed":
+                    _r["slm_decision"] = "auto_accept"
+                elif _band:
+                    _r["slm_decision"] = _adv.decide(float(_r.get("slm_raw_score", 0.0)), _band)
+                else:
+                    _r["slm_decision"] = "review" if _e["attribute_penalty"] > 0 else "auto_accept"
+                if _e["attribute_penalty"] > 0 and _r["slm_decision"] == "auto_accept":
+                    _r["slm_decision"] = "review"
+        except Exception:
+            pass
 
         # --- emit telemetry (best-effort, never crashes inference) ---
         try:

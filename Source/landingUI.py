@@ -123,6 +123,7 @@ matching methods, so the numbers you rely on are the numbers you can trust.
 <a class="cta-btn" href="?page=whymatch" target="_self">Why Match</a>
 <a class="cta-btn" href="?page=rematchpricing" target="_self">Price Model</a>
 <a class="cta-btn" href="?page=howmatchworks" target="_self">How it Works</a>
+<a class="cta-btn" href="?page=copilot" target="_self">Reinsurance Copilot</a>
 </div>
 
 </div>

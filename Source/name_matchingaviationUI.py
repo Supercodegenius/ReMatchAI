@@ -883,13 +883,22 @@ def read_table(uploaded_file):
 RE_NEWLINES = re.compile(r"[\r\n]+")
 RE_SPACES = re.compile(r"\s+")
 RE_ENGLISH_PUNCT = re.compile(r"[!\"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]+")
-RE_SPECIAL_CHARS = re.compile(r"[^0-9A-Za-z\u4e00-\u9fff\u3040-\u30ff\s]+")
+RE_SPECIAL_CHARS = re.compile(r"[^0-9A-Za-z\u00df\u1e9e\u4e00-\u9fff\u3040-\u30ff\s]+")
 RE_CJK = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff\uf900-\ufaff]+")
+RE_NUMBERS = re.compile(r"\d+")
+RE_ROMAN_NUMERALS = re.compile(
+    r"\b(?=[MDCLXVI]+\b)M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\b",
+    re.IGNORECASE,
+)
+RE_HTML_TAGS = re.compile(r"<[^>]+>")
 
 
 def _sanitize_selected_column(
     series: pd.Series,
     *,
+    remove_eszett: bool,
+    remove_numbers_roman: bool,
+    remove_html_content: bool,
     remove_accented: bool,
     normalize_spaces: bool,
     remove_english_punctuation: bool,
@@ -897,6 +906,16 @@ def _sanitize_selected_column(
     remove_cjk: bool,
 ) -> pd.Series:
     cleaned = series.fillna("").astype(str)
+
+    if remove_eszett:
+        cleaned = cleaned.str.replace("ß", "ss", regex=False).str.replace("ẞ", "SS", regex=False)
+
+    if remove_numbers_roman:
+        cleaned = cleaned.str.replace(RE_NUMBERS, "", regex=True)
+        cleaned = cleaned.str.replace(RE_ROMAN_NUMERALS, "", regex=True)
+
+    if remove_html_content:
+        cleaned = cleaned.str.replace(RE_HTML_TAGS, " ", regex=True)
 
     if remove_accented:
         cleaned = cleaned.map(
@@ -1285,7 +1304,7 @@ with st.sidebar:
     st.header("Matching Settings")
     st.caption("Configure matching and provide data.")
 
-    use_demo_files = st.toggle("Use built-in demo files", value=True)
+    use_demo_files = st.toggle("Use built-in demo files", value=False)
     slm_health = _slm_health_status()
     slm_available, slm_unavailable_reason = _slm_matching_available()
 
@@ -1409,18 +1428,15 @@ if sidebar_menu == "Data Upload":
             )
             st.session_state["smart_sanitizer_selected_column"] = selected_sanitizer_column
 
-            option_col_1, option_col_2 = st.columns(2, gap="small")
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                sanitize_accented = st.checkbox("ACCC", value=True)
-            with col2:
-                sanitize_newlines_spaces = st.checkbox("NSCC", value=True)
-            with col3:
-                sanitize_english_punct = st.checkbox("EPCC", value=True)
-            with col4:
-                sanitize_special_chars = st.checkbox("SPCC", value=True)
-            with col5:
-                sanitize_cjk = st.checkbox("CJCC", value=False)
+            st.caption("Sanitizer options")
+            sanitize_accented = st.checkbox("ACCC", value=True, key="sanitizer_accc")
+            sanitize_newlines_spaces = st.checkbox("NSCC", value=True, key="sanitizer_nscc")
+            sanitize_english_punct = st.checkbox("EPCC", value=True, key="sanitizer_epcc")
+            sanitize_special_chars = st.checkbox("SPCC", value=True, key="sanitizer_spcc")
+            sanitize_cjk = st.checkbox("CJCC", value=False, key="sanitizer_cjcc")
+            sanitize_eszett = st.checkbox("ESCC", value=False, key="sanitizer_escc")
+            sanitize_numbers_roman = st.checkbox("NRCC", value=False, key="sanitizer_nrcc")
+            sanitize_html_content = st.checkbox("HTCC", value=False, key="sanitizer_htcc")
 
             mapping_df = pd.DataFrame(
                 [
@@ -1474,6 +1490,9 @@ if sidebar_menu == "Data Upload":
     if upload_button_clicked and uploaded_source_file is not None and source_upload_df is not None:
         if not any(
             [
+                sanitize_eszett,
+                sanitize_numbers_roman,
+                sanitize_html_content,
                 sanitize_accented,
                 sanitize_newlines_spaces,
                 sanitize_english_punct,
@@ -1487,6 +1506,9 @@ if sidebar_menu == "Data Upload":
         cleaned_df = source_upload_df.copy()
         cleaned_df[selected_sanitizer_column] = _sanitize_selected_column(
             cleaned_df[selected_sanitizer_column],
+            remove_eszett=sanitize_eszett,
+            remove_numbers_roman=sanitize_numbers_roman,
+            remove_html_content=sanitize_html_content,
             remove_accented=sanitize_accented,
             normalize_spaces=sanitize_newlines_spaces,
             remove_english_punctuation=sanitize_english_punct,
@@ -2254,10 +2276,31 @@ if st.session_state.pop("scroll_to_top_matches", False):
         height=0,
     )
 
-st.link_button(
+download_bytes = full_result_df.to_csv(index=False).encode("utf-8")
+download_name = "matched_data.csv"
+download_mime = "text/csv"
+if not use_demo_files and left_file is not None:
+    source_name = str(left_file.name or "").strip()
+    base_name, source_ext = os.path.splitext(os.path.basename(source_name))
+    safe_base = base_name or "matched_data"
+    if source_ext.lower() == ".xlsx":
+        output_buffer = BytesIO()
+        with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+            full_result_df.to_excel(writer, index=False, sheet_name="Matched Results")
+        output_buffer.seek(0)
+        download_bytes = output_buffer.getvalue()
+        download_name = f"{safe_base}_matched.xlsx"
+        download_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    elif source_ext.lower() == ".csv":
+        download_name = f"{safe_base}_matched.csv"
+
+st.download_button(
     "Download Match Results",
-    "https://www.linkedin.com/in/surabhi-singh-368042167/",
+    data=download_bytes,
+    file_name=download_name,
+    mime=download_mime,
     use_container_width=True,
+    key="download_match_results",
 )
 
 # ---------------------------------------------------------------------------

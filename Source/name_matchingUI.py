@@ -20,6 +20,8 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import html
 
+from Source.sanitizer_dates import apply_inception_expiry_rules
+
 FAVICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "favicon.png.jpeg")
 
 
@@ -882,11 +884,19 @@ def _build_sanitizer_download_payload(
     source_filename: str,
     selected_column: str,
     sanitized_values: pd.Series,
+    additional_sanitized_values: dict[str, pd.Series] | None = None,
 ) -> tuple[bytes, str, str]:
     export_df = source_df.copy()
-    sanitized_column_name = "Sanitised"
-    insert_at = export_df.columns.get_loc(selected_column) + 1
-    export_df.insert(insert_at, sanitized_column_name, sanitized_values.fillna("").astype(str))
+    values_to_export = [(selected_column, sanitized_values, "Sanitised")]
+    values_to_export.extend(
+        (column, values, f"{column} (Sanitised)")
+        for column, values in (additional_sanitized_values or {}).items()
+    )
+    for source_column, values, output_column in values_to_export:
+        insert_at = export_df.columns.get_loc(source_column) + 1
+        while output_column in export_df.columns:
+            output_column = f"{output_column} (output)"
+        export_df.insert(insert_at, output_column, values.fillna("").astype(str))
 
     base_name, extension = os.path.splitext(source_filename)
     if extension.lower() == ".csv":
@@ -903,16 +913,36 @@ def _build_sanitizer_download_payload(
     )
 
 
+def _style_changed_sanitizer_rows(preview_df: pd.DataFrame):
+    if "Changed" not in preview_df.columns:
+        return preview_df
+
+    def highlight_changed_row(row: pd.Series) -> list[str]:
+        color = "background-color: #fff2cc" if bool(row["Changed"]) else ""
+        return [color] * len(row)
+
+    return preview_df.style.apply(highlight_changed_row, axis=1)
+
+
 RE_NEWLINES = re.compile(r"[\r\n]+")
 RE_SPACES = re.compile(r"\s+")
 RE_ENGLISH_PUNCT = re.compile(r"[!\"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]+")
-RE_SPECIAL_CHARS = re.compile(r"[^0-9A-Za-z\u4e00-\u9fff\u3040-\u30ff\s]+")
+RE_SPECIAL_CHARS = re.compile(r"[^0-9A-Za-z\u00df\u1e9e\u4e00-\u9fff\u3040-\u30ff\s]+")
 RE_CJK = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff\uf900-\ufaff]+")
+RE_NUMBERS = re.compile(r"\d+")
+RE_ROMAN_NUMERALS = re.compile(
+    r"\b(?=[MDCLXVI]+\b)M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\b",
+    re.IGNORECASE,
+)
+RE_HTML_TAGS = re.compile(r"<[^>]+>")
 
 
 def _sanitize_selected_column(
     series: pd.Series,
     *,
+    remove_eszett: bool,
+    remove_numbers_roman: bool,
+    remove_html_content: bool,
     remove_accented: bool,
     normalize_spaces: bool,
     remove_english_punctuation: bool,
@@ -920,6 +950,16 @@ def _sanitize_selected_column(
     remove_cjk: bool,
 ) -> pd.Series:
     cleaned = series.fillna("").astype(str)
+
+    if remove_eszett:
+        cleaned = cleaned.str.replace("ß", "ss", regex=False).str.replace("ẞ", "SS", regex=False)
+
+    if remove_numbers_roman:
+        cleaned = cleaned.str.replace(RE_NUMBERS, "", regex=True)
+        cleaned = cleaned.str.replace(RE_ROMAN_NUMERALS, "", regex=True)
+
+    if remove_html_content:
+        cleaned = cleaned.str.replace(RE_HTML_TAGS, " ", regex=True)
 
     if remove_accented:
         cleaned = cleaned.map(
@@ -1343,7 +1383,7 @@ with st.sidebar:
     st.header("Matching Settings")
     st.caption("Configure matching and provide data.")
 
-    use_demo_files = st.toggle("Use built-in demo files", value=True)
+    use_demo_files = st.toggle("Use built-in demo files", value=False)
     slm_health = _slm_health_status()
     slm_available, slm_unavailable_reason = _slm_matching_available()
 
@@ -1448,6 +1488,10 @@ if sidebar_menu == "Data Upload":
     source_upload_df = None
     mapping_df = pd.DataFrame(columns=["Source Column", "Destination Column"])
     preview_clicked = False
+    format_inception_expiry_dates = False
+    align_expiry_date = False
+    sanitizer_inception_column = False
+    sanitizer_expiry_column = None
     uploaded_source_file = st.file_uploader(
         "Source file selector",
         type=["csv", "xlsx"],
@@ -1467,18 +1511,78 @@ if sidebar_menu == "Data Upload":
             )
             st.session_state["smart_sanitizer_selected_column"] = selected_sanitizer_column
 
-            option_col_1, option_col_2 = st.columns(2, gap="small")
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                sanitize_accented = st.checkbox("ACCC", value=True)
-            with col2:
-                sanitize_newlines_spaces = st.checkbox("NSCC", value=True)
-            with col3:
-                sanitize_english_punct = st.checkbox("EPCC", value=True)
-            with col4:
-                sanitize_special_chars = st.checkbox("SPCC", value=True)
-            with col5:
-                sanitize_cjk = st.checkbox("CJCC", value=False)
+            normalized_selected_column = re.sub(
+                r"[^a-z]",
+                "",
+                selected_sanitizer_column.casefold(),
+            )
+            sanitizer_inception_column = "inception" in normalized_selected_column
+            expiry_candidates = [
+                column
+                for column in source_columns
+                if "expiry" in re.sub(r"[^a-z]", "", column.casefold())
+                or "expiration" in re.sub(r"[^a-z]", "", column.casefold())
+            ]
+            if len(expiry_candidates) == 1:
+                sanitizer_expiry_column = expiry_candidates[0]
+
+            st.caption("Sanitizer options")
+            top1, top2, top3, top4 = st.columns(4, gap="small")
+            with top1:
+                sanitize_accented = st.checkbox("ACCC", value=True, key="sanitizer_accc")
+            with top2:
+                sanitize_newlines_spaces = st.checkbox("NSCC", value=True, key="sanitizer_nscc")
+            with top3:
+                sanitize_english_punct = st.checkbox("EPCC", value=True, key="sanitizer_epcc")
+            with top4:
+                sanitize_special_chars = st.checkbox("SPCC", value=True, key="sanitizer_spcc")
+
+            bottom1, bottom2, bottom3, bottom4 = st.columns(4, gap="small")
+            with bottom1:
+                sanitize_cjk = st.checkbox("CJCC", value=False, key="sanitizer_cjcc")
+            with bottom2:
+                sanitize_eszett = st.checkbox("ESCC", value=False, key="sanitizer_escc")
+            with bottom3:
+                sanitize_numbers_roman = st.checkbox("NRCC", value=False, key="sanitizer_nrcc")
+            with bottom4:
+                sanitize_html_content = st.checkbox("HTCC", value=False, key="sanitizer_htcc")
+
+            if sanitizer_inception_column:
+                st.caption("Inception / Expiry date options")
+                date_col_1, date_col_2 = st.columns(2, gap="small")
+                with date_col_1:
+                    format_inception_expiry_dates = st.checkbox(
+                        "FDIE",
+                        value=False,
+                        key="sanitizer_fdie",
+                    )
+                with date_col_2:
+                    align_expiry_requested = st.checkbox(
+                        "ADIE",
+                        value=True,
+                        disabled=sanitizer_expiry_column is None,
+                        key="sanitizer_adie",
+                    )
+                    align_expiry_date = (
+                        align_expiry_requested and sanitizer_expiry_column is not None
+                    )
+                if sanitizer_expiry_column is None:
+                    st.info(
+                        "ADIE is unavailable because exactly one Expiry/Expiration column "
+                        "could not be identified. FDIE can still format the selected Inception column."
+                    )
+                if format_inception_expiry_dates or align_expiry_date:
+                    st.caption(
+                        f"Date columns: `{selected_sanitizer_column}`"
+                        + (
+                            f" and `{sanitizer_expiry_column}`."
+                            if sanitizer_expiry_column is not None
+                            else "."
+                        )
+                    )
+                    st.caption(
+                        "When FDIE or ADIE is used, the date rules replace the regular text-sanitizer options for this run."
+                    )
 
             mapping_df = pd.DataFrame(
                 [
@@ -1556,14 +1660,21 @@ if sidebar_menu == "Data Upload":
                 "smart_sanitizer_download_name",
                 "smart_sanitizer_download_mime",
                 "smart_sanitizer_preview_df",
+                "smart_sanitizer_date_warnings",
                 "smart_sanitizer_result_ready",
             ):
                 st.session_state.pop(session_key, None)
             st.session_state["smart_sanitizer_last_source_name"] = uploaded_source_file.name
 
         if st.session_state.get("smart_sanitizer_run_requested"):
-            if not any(
+            date_rules_requested = sanitizer_inception_column and (
+                format_inception_expiry_dates or align_expiry_date
+            )
+            if not date_rules_requested and not any(
                 [
+                    sanitize_eszett,
+                    sanitize_numbers_roman,
+                    sanitize_html_content,
                     sanitize_accented,
                     sanitize_newlines_spaces,
                     sanitize_english_punct,
@@ -1574,34 +1685,80 @@ if sidebar_menu == "Data Upload":
                 st.warning("Select at least one sanitizer option before running Smart Sanitizer.")
                 st.stop()
 
-            sanitized_values = _sanitize_selected_column(
-                source_upload_df[selected_sanitizer_column],
-                remove_accented=sanitize_accented,
-                normalize_spaces=sanitize_newlines_spaces,
-                remove_english_punctuation=sanitize_english_punct,
-                remove_special_characters=sanitize_special_chars,
-                remove_cjk=sanitize_cjk,
-            )
-            cleaned_df = source_upload_df.copy()
-            cleaned_df[selected_sanitizer_column] = sanitized_values
+            date_warnings = []
+            additional_sanitized_values = {}
+            changed_rows = None
+            if date_rules_requested:
+                cleaned_df, changed_rows, invalid_inception_count, invalid_expiry_count = (
+                    apply_inception_expiry_rules(
+                        source_upload_df,
+                        selected_sanitizer_column,
+                        sanitizer_expiry_column,
+                        format_dates=format_inception_expiry_dates,
+                        align_expiry=align_expiry_date,
+                    )
+                )
+                if invalid_inception_count:
+                    date_warnings.append(
+                        f"{invalid_inception_count} Inception value(s) could not be parsed and were left unchanged."
+                    )
+                if (
+                    format_inception_expiry_dates
+                    and not align_expiry_date
+                    and invalid_expiry_count
+                ):
+                    date_warnings.append(
+                        f"{invalid_expiry_count} Expiry value(s) could not be parsed and were left unchanged."
+                    )
+                sanitized_values = cleaned_df[selected_sanitizer_column]
+                if sanitizer_expiry_column is not None:
+                    additional_sanitized_values[sanitizer_expiry_column] = cleaned_df[
+                        sanitizer_expiry_column
+                    ]
+            else:
+                sanitized_values = _sanitize_selected_column(
+                    source_upload_df[selected_sanitizer_column],
+                    remove_eszett=sanitize_eszett,
+                    remove_numbers_roman=sanitize_numbers_roman,
+                    remove_html_content=sanitize_html_content,
+                    remove_accented=sanitize_accented,
+                    normalize_spaces=sanitize_newlines_spaces,
+                    remove_english_punctuation=sanitize_english_punct,
+                    remove_special_characters=sanitize_special_chars,
+                    remove_cjk=sanitize_cjk,
+                )
+                cleaned_df = source_upload_df.copy()
+                cleaned_df[selected_sanitizer_column] = sanitized_values
+
             download_bytes, download_name, download_mime = _build_sanitizer_download_payload(
                 source_upload_df,
                 uploaded_source_file.name,
                 selected_sanitizer_column,
                 sanitized_values,
+                additional_sanitized_values,
             )
-            preview_df = pd.DataFrame(
-                {
-                    "Original": source_upload_df[selected_sanitizer_column].fillna("").astype(str).head(20),
-                    "Sanitized": sanitized_values.fillna("").astype(str).head(20),
-                }
-            )
+            preview_data = {
+                "Original": source_upload_df[selected_sanitizer_column].fillna("").astype(str).head(20),
+                "Sanitized": sanitized_values.fillna("").astype(str).head(20),
+            }
+            if date_rules_requested:
+                if sanitizer_expiry_column is not None:
+                    preview_data["Expiry Original"] = source_upload_df[
+                        sanitizer_expiry_column
+                    ].fillna("").astype(str).head(20)
+                    preview_data["Expiry Sanitized"] = cleaned_df[
+                        sanitizer_expiry_column
+                    ].fillna("").astype(str).head(20)
+                if changed_rows is not None:
+                    preview_data["Changed"] = changed_rows.head(20)
+            preview_df = pd.DataFrame(preview_data)
 
             st.session_state["smart_sanitizer_output_df"] = cleaned_df
             st.session_state["smart_sanitizer_download_bytes"] = download_bytes
             st.session_state["smart_sanitizer_download_name"] = download_name
             st.session_state["smart_sanitizer_download_mime"] = download_mime
             st.session_state["smart_sanitizer_preview_df"] = preview_df
+            st.session_state["smart_sanitizer_date_warnings"] = date_warnings
             st.session_state["smart_sanitizer_result_ready"] = True
             st.session_state["smart_sanitizer_run_requested"] = False
             st.rerun()
@@ -1610,7 +1767,14 @@ if sidebar_menu == "Data Upload":
         st.success(
             f"Smart Sanitizer completed for column `{st.session_state.get('smart_sanitizer_selected_column', '')}`."
         )
-        st.dataframe(st.session_state["smart_sanitizer_preview_df"], use_container_width=True)
+        for date_warning in st.session_state.get("smart_sanitizer_date_warnings", []):
+            st.warning(date_warning)
+        st.dataframe(
+            _style_changed_sanitizer_rows(st.session_state["smart_sanitizer_preview_df"]),
+            use_container_width=True,
+        )
+        if "Changed" in st.session_state["smart_sanitizer_preview_df"].columns:
+            st.caption("Rows highlighted in pale yellow were changed by the date rules.")
         st.caption("DB save flow is temporarily disabled.")
 
     st.markdown("Switch to **Name Matching** from the left menu to run matching.")
@@ -2414,10 +2578,54 @@ if st.session_state.pop("scroll_to_top_matches", False):
         height=0,
     )
 
-st.link_button(
+def _build_match_download_df(source_df: pd.DataFrame, matches_df: pd.DataFrame) -> pd.DataFrame:
+    """Keep every source field and append every matcher result field."""
+    source = source_df.reset_index(drop=True).copy()
+    matches = matches_df.reset_index(drop=True).copy()
+
+    used_columns = set(source.columns)
+    appended: dict[str, pd.Series] = {}
+    for column in matches.columns:
+        output_column = str(column)
+        if output_column in used_columns:
+            output_column = f"{output_column} (match result)"
+        base_column = output_column
+        suffix = 2
+        while output_column in used_columns:
+            output_column = f"{base_column} {suffix}"
+            suffix += 1
+        used_columns.add(output_column)
+        appended[output_column] = matches[column]
+
+    return pd.concat([source, pd.DataFrame(appended)], axis=1)
+
+
+download_result_df = _build_match_download_df(left_df, full_result_df)
+download_bytes = download_result_df.to_csv(index=False).encode("utf-8")
+download_name = "matched_data.csv"
+download_mime = "text/csv"
+if not use_demo_files and left_file is not None:
+    source_name = str(left_file.name or "").strip()
+    base_name, source_ext = os.path.splitext(os.path.basename(source_name))
+    safe_base = base_name or "matched_data"
+    if source_ext.lower() == ".xlsx":
+        output_buffer = BytesIO()
+        with pd.ExcelWriter(output_buffer, engine="openpyxl") as writer:
+            download_result_df.to_excel(writer, index=False, sheet_name="Matched Results")
+        output_buffer.seek(0)
+        download_bytes = output_buffer.getvalue()
+        download_name = f"{safe_base}_matched.xlsx"
+        download_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    elif source_ext.lower() == ".csv":
+        download_name = f"{safe_base}_matched.csv"
+
+st.download_button(
     "Download Match Results",
-    "https://www.linkedin.com/in/surabhi-singh-368042167/",
+    data=download_bytes,
+    file_name=download_name,
+    mime=download_mime,
     use_container_width=True,
+    key="download_match_results",
 )
 
 # ---------------------------------------------------------------------------
@@ -2767,4 +2975,3 @@ st.markdown(
     '<div class="nm-footer">&copy; 2026 braincal.com. All rights reserved</div>',
     unsafe_allow_html=True,
 )
-

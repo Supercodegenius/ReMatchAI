@@ -1,0 +1,46 @@
+cedant,line,zone,limit,premium,commission_pct,expected_loss_ratio,loss_volatility_cov
+Allianz,Property,US Gulf / Southeast,11100000.0,1461000.0,0.115,0.379,3.0
+Allianz,Marine,Global marine,6500000.0,713000.0,0.197,0.511,2.0
+Allianz,Casualty,US Northeast,2600000.0,422000.0,0.163,0.66,2.0
+AXA,Casualty,US Northeast,7800000.0,1209000.0,0.132,0.777,2.0
+AXA,Aviation,Global aviation,3300000.0,322000.0,0.153,0.61,2.8
+Zurich,Casualty,Europe,15300000.0,2550000.0,0.134,0.754,2.0
+Zurich,Aviation,Global aviation,5000000.0,434000.0,0.15,0.605,2.8
+Chubb,Marine,Global marine,4300000.0,485000.0,0.208,0.539,2.0
+Chubb,Aviation,Global aviation,5000000.0,470000.0,0.165,0.637,2.8
+Chubb,Property,US Gulf / Southeast,22200000.0,2751000.0,0.105,0.437,3.0
+AIG,Property,US Gulf / Southeast,11100000.0,1516000.0,0.131,0.462,3.0
+AIG,Marine,Global marine,10800000.0,1224000.0,0.204,0.593,2.0
+AIG,Aviation,Global aviation,4100000.0,357000.0,0.168,0.596,2.8
+Generali,Casualty,Europe,20400000.0,3077000.0,0.141,0.702,2.0
+Generali,Aviation,Global aviation,6600000.0,630000.0,0.144,0.618,2.8
+Tokio Marine,Casualty,Europe,7600000.0,1303000.0,0.146,0.779,2.0
+Tokio Marine,Marine,Global marine,2200000.0,238000.0,0.202,0.641,2.0
+Tokio Marine,Property,Asia-Pacific,32000000.0,3760000.0,0.128,0.528,3.0
+Berkshire Hathaway Specialty,Property,Europe,7600000.0,817000.0,0.1,0.503,3.0
+Berkshire Hathaway Specialty,Casualty,US Northeast,3900000.0,580000.0,0.136,0.726,2.0
+Berkshire Hathaway Specialty,Aviation,Global aviation,5000000.0,510000.0,0.158,0.602,2.8
+Liberty Mutual,Marine,Global marine,10800000.0,1319000.0,0.196,0.517,2.0
+Liberty Mutual,Aviation,Global aviation,6600000.0,640000.0,0.133,0.553,2.8
+Travelers,Casualty,US Northeast,7800000.0,1081000.0,0.153,0.726,2.0
+Travelers,Property,US Gulf / Southeast,22200000.0,2755000.0,0.135,0.468,3.0
+Sompo,Aviation,Global aviation,5000000.0,480000.0,0.135,0.598,2.8
+Sompo,Property,Asia-Pacific,16000000.0,1908000.0,0.103,0.386,3.0
+Mapfre,Aviation,Global aviation,5000000.0,428000.0,0.136,0.607,2.8
+Mapfre,Property,Asia-Pacific,6400000.0,828000.0,0.139,0.508,3.0
+Mapfre,Casualty,Europe,20400000.0,3602000.0,0.166,0.697,2.0
+QBE,Aviation,Global aviation,2500000.0,258000.0,0.162,0.651,2.8
+QBE,Marine,Global marine,8700000.0,1139000.0,0.201,0.557,2.0
+Aviva,Casualty,Europe,12700000.0,1885000.0,0.148,0.79,2.0
+Aviva,Property,Asia-Pacific,12800000.0,1746000.0,0.103,0.386,3.0
+Swiss Re Corporate Solutions,Property,US Gulf / Southeast,27800000.0,3461000.0,0.119,0.474,3.0
+Swiss Re Corporate Solutions,Marine,Global marine,10800000.0,1352000.0,0.216,0.625,2.0
+Swiss Re Corporate Solutions,Casualty,US Northeast,13000000.0,1892000.0,0.147,0.742,2.0
+XYZ Insurance,Marine,Global marine,5400000.0,695000.0,0.209,0.527,2.0
+XYZ Insurance,Property,US Northeast,3900000.0,402000.0,0.132,0.393,3.0
+Atlas Mutual,Aviation,Global aviation,1700000.0,145000.0,0.151,0.669,2.8
+Atlas Mutual,Casualty,US Northeast,6500000.0,1192000.0,0.163,0.674,2.0
+Atlas Mutual,Marine,Global marine,4300000.0,471000.0,0.211,0.552,2.0
+Harbor Specialty,Property,US Northeast,6500000.0,818000.0,0.133,0.511,3.0
+Harbor Specialty,Casualty,US Northeast,3900000.0,630000.0,0.165,0.764,2.0
+Harbor Specialty,Marine,Global marine,6500000.0,664000.0,0.187,0.576,2.0

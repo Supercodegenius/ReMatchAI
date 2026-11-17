@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModel, AutoTokenizer
@@ -176,52 +175,79 @@ def evaluate_model(model, loader, margin=0.5):
     return metrics
 
 
-def _save_training_summary(summary: dict[str, object]) -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    summary_path = OUTPUT_DIR / "training_summary.json"
+def _save_training_summary(summary: dict[str, object], output_dir: Path = OUTPUT_DIR) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = output_dir / "training_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
-def main():
-    if not TRAIN_PATH.exists():
-        raise FileNotFoundError(f"Training data not found: {TRAIN_PATH}")
+def clean_pairs(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.loc[:, ["name_a", "name_b", "label"]].copy()
+    df["name_a"] = df["name_a"].fillna("").astype(str)
+    df["name_b"] = df["name_b"].fillna("").astype(str)
+    df["label"] = pd.to_numeric(df["label"], errors="coerce")
+    return df[df["label"].isin([0, 1])].copy()
 
-    df = pd.read_csv(TRAIN_PATH)
+
+def make_loader(df: pd.DataFrame, tokenizer, shuffle: bool = False) -> DataLoader:
+    return DataLoader(NamePairDataset(df, tokenizer), batch_size=32, shuffle=shuffle)
+
+
+def main(
+    train_path: Path | None = None,
+    output_dir: Path | None = None,
+    base_model: str | None = None,
+    epochs: int = 5,
+    lr: float = 2e-5,
+    val_df: pd.DataFrame | None = None,
+):
+    """Train the bi-encoder.
+
+    base_model: start from this checkpoint (e.g. the live model) instead of the stock MiniLM.
+    val_df: fixed holdout; when given, all rows of the training CSV are used for training.
+    """
+    train_path = Path(train_path) if train_path else TRAIN_PATH
+    output_dir = Path(output_dir) if output_dir else OUTPUT_DIR
+    start_model = base_model or MODEL_NAME
+
+    if not train_path.exists():
+        raise FileNotFoundError(f"Training data not found: {train_path}")
+
+    df = pd.read_csv(train_path)
     required_columns = {"name_a", "name_b", "label"}
     missing_columns = required_columns - set(df.columns)
     if missing_columns:
         raise ValueError(f"Training CSV is missing required columns: {sorted(missing_columns)}")
 
-    df = df.loc[:, ["name_a", "name_b", "label"]].copy()
-    df["name_a"] = df["name_a"].fillna("").astype(str)
-    df["name_b"] = df["name_b"].fillna("").astype(str)
-    df["label"] = pd.to_numeric(df["label"], errors="coerce")
-    df = df[df["label"].isin([0, 1])].copy()
+    df = clean_pairs(df)
     if df.empty:
         raise ValueError("Training CSV does not contain any valid 0/1 labels.")
 
-    stratify_labels = df["label"] if df["label"].nunique() > 1 else None
-    train_df, val_df = train_test_split(
-        df,
-        test_size=0.1,
-        random_state=42,
-        stratify=stratify_labels,
-    )
+    if val_df is not None:
+        train_df, val_df = df, clean_pairs(val_df)
+    else:
+        from sklearn.model_selection import train_test_split
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        stratify_labels = df["label"] if df["label"].nunique() > 1 else None
+        train_df, val_df = train_test_split(
+            df,
+            test_size=0.1,
+            random_state=42,
+            stratify=stratify_labels,
+        )
 
-    train_ds = NamePairDataset(train_df, tokenizer)
-    val_ds = NamePairDataset(val_df, tokenizer)
+    tok_source = start_model if (Path(start_model) / "tokenizer_config.json").exists() else MODEL_NAME
+    tokenizer = AutoTokenizer.from_pretrained(tok_source)
 
-    train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=32)
+    train_loader = make_loader(train_df, tokenizer, shuffle=True)
+    val_loader = make_loader(val_df, tokenizer)
 
-    model = BiEncoder(MODEL_NAME).to(DEVICE)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+    model = BiEncoder(start_model).to(DEVICE)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     best_val_f1 = -1.0
     best_summary: dict[str, object] | None = None
 
-    for epoch in range(5):
+    for epoch in range(epochs):
         model.train()
         total_loss = 0
         for batch in train_loader:
@@ -247,11 +273,11 @@ def main():
 
         if val_metrics["f1"] > best_val_f1:
             best_val_f1 = float(val_metrics["f1"])
-            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-            model.encoder.save_pretrained(OUTPUT_DIR)
-            tokenizer.save_pretrained(OUTPUT_DIR)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            model.encoder.save_pretrained(output_dir)
+            tokenizer.save_pretrained(output_dir)
             best_summary = {
-                "model_name": MODEL_NAME,
+                "model_name": start_model,
                 "device": DEVICE,
                 "train_rows": int(len(train_df)),
                 "val_rows": int(len(val_df)),
@@ -268,17 +294,18 @@ def main():
                 "pooling": "mean",
                 "normalization": "Source.namematching.normalize_name",
             }
-            _save_training_summary(best_summary)
+            _save_training_summary(best_summary, output_dir)
 
     if best_summary is None:
         raise RuntimeError("Training completed without producing a valid checkpoint.")
 
-    print(f"Best model saved to {OUTPUT_DIR}")
+    print(f"Best model saved to {output_dir}")
     print(
         "Recommended threshold: "
         f"{float(best_summary['best_threshold']):.4f} "
         f"(epoch {int(best_summary['best_epoch'])})"
     )
+    return best_summary
 
 
 if __name__ == "__main__":

@@ -61,6 +61,8 @@ elif page == "whymatch":
     runpy.run_path(os.path.join(BASE_DIR, "Source", "whymatchUI.py"), run_name="__main__")
 elif page in ("rematchpricing", "pricing"):
     runpy.run_path(os.path.join(BASE_DIR, "Source", "matchpricingUI.py"), run_name="__main__")
+elif page in ("copilot", "simulator", "treaty", "decision", "decision_ai", "cedants"):
+    runpy.run_path(os.path.join(BASE_DIR, "Source", "decisionUI.py"), run_name="__main__")
 elif page == "howmatchworks":
     runpy.run_path(os.path.join(BASE_DIR, "Source", "howmatchworksUI.py"), run_name="__main__")
 else:

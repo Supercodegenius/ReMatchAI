@@ -135,3 +135,26 @@ matching methods, so the numbers you rely on are the numbers you can trust.
 
 if _open_demo_dialog:
     _show_demo_dialog()
+
+if st.query_params.get("debug") == "1":
+    import glob
+    import sys
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+    _ctx = get_script_run_ctx()
+    _main = getattr(_ctx, "main_script_path", "?")
+    _router = ""
+    try:
+        with open(_main, encoding="utf-8", errors="replace") as _f:
+            _router = "".join(l for l in _f if "copilot" in l or "DEPLOY_REV" in l)
+    except Exception as _e:
+        _router = f"cannot read: {_e}"
+    st.code(
+        f"streamlit {st.__version__}  python {sys.version.split()[0]}\n"
+        f"main script : {_main}\n"
+        f"cwd         : {os.getcwd()}\n"
+        f"landingUI   : {os.path.abspath(__file__)}\n"
+        f"decisionUI exists: {os.path.exists(os.path.join(os.path.dirname(__file__), 'decisionUI.py'))}\n"
+        f"router lines:\n{_router or '(none mention copilot)'}\n"
+        f"all streamlit_app.py: {glob.glob('/**/streamlit_app.py', recursive=True)[:10] if os.name != 'nt' else ''}"
+    )

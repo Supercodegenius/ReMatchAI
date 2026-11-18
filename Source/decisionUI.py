@@ -13,16 +13,18 @@ import simulator_engine as se  # noqa: E402
 from cedant_engine import demo_history, score_cedants, template_csv, validate  # noqa: E402
 
 PAGES = {
-    "copilot": "Copilot",
+    "reinsights": "ReInsights",
     "simulator": "Simulator",
     "treaty": "Treaty Summary",
     "decision": "Line Size",
     "decision_ai": "Recommendation",
     "cedants": "Cedants",
 }
-page = st.query_params.get("page", "copilot")
+page = st.query_params.get("page", "reinsights")
+if page == "copilot":
+    page = "reinsights"
 if page not in PAGES:
-    page = "copilot"
+    page = "reinsights"
 
 
 def _go(target: str) -> None:
@@ -103,7 +105,7 @@ def _num(container, label, key, _default=None, **kw):
     return container.number_input(label, key=key, **kw)
 
 
-box = st.expander("Submission details", expanded=page != "copilot")
+box = st.expander("Submission details", expanded=page != "reinsights")
 box.markdown("##### 1. Describe the submission")
 box.selectbox(
     "Treaty / buyer type", list(BUYER_PROFILES), key="buyer_profile", on_change=_apply_profile,
@@ -163,7 +165,7 @@ def banner() -> None:
                     "Push for more rate or walk away.")
 
 
-if page == "copilot":
+if page == "reinsights":
     st.title("Reinsurance Copilot")
     st.caption("Describe a submission in plain words. I will recommend write or not, line size, price, capital, retro and ROE.")
     hist = st.session_state.setdefault("copilot_chat", [{"role": "assistant", "content": cp.HELP}])

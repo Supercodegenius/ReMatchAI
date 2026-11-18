@@ -123,7 +123,7 @@ matching methods, so the numbers you rely on are the numbers you can trust.
 <a class="cta-btn" href="?page=whymatch" target="_self">Why Match</a>
 <a class="cta-btn" href="?page=rematchpricing" target="_self">Price Model</a>
 <a class="cta-btn" href="?page=howmatchworks" target="_self">How it Works</a>
-<a class="cta-btn" href="?page=copilot" target="_self">Reinsurance Copilot</a>
+<a class="cta-btn" href="?page=reinsights" target="_self">Re Copilot</a>
 </div>
 
 </div>
@@ -146,7 +146,7 @@ if st.query_params.get("debug") == "1":
     _router = ""
     try:
         with open(_main, encoding="utf-8", errors="replace") as _f:
-            _router = "".join(l for l in _f if "copilot" in l or "DEPLOY_REV" in l)
+            _router = "".join(l for l in _f if "reinsights" in l or "DEPLOY_REV" in l)
     except Exception as _e:
         _router = f"cannot read: {_e}"
     st.code(

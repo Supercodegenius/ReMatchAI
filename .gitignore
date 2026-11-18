@@ -11,3 +11,5 @@ Source/data_upload.db
 .venv/
 .streamlit*.log
 ~$*.xlsx
+
+.venv_broken/

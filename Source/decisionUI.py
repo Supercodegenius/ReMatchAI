@@ -43,8 +43,30 @@ st.markdown(
     unsafe_allow_html=True,
 )
 menu = st.columns([1.6, 1.2, 1.3, 1.5, 1.3, 1.5, 1.2])
-st.markdown("<style>div[data-testid='stButton']>button{height:2.75rem;white-space:nowrap}</style>",
-            unsafe_allow_html=True)
+st.markdown(
+    "<style>"
+    "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&"
+    "family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');"
+    "html,body,.stApp,div[data-testid='stAppViewContainer'],div[data-testid='stMain'],section.main"
+    "{background:#f3f4f6 !important;font-family:'Plus Jakarta Sans',sans-serif}"
+    "div[data-testid='stHeader'],header[data-testid='stHeader'],div[data-testid='stToolbar'],"
+    "div[data-testid='stDecoration'],#MainMenu,footer{display:none !important}"
+    "h1,h2,h3,h4{font-family:'Manrope',sans-serif;color:#12131a}"
+    "div[data-testid='stButton']>button,div[data-testid='stDownloadButton']>button,"
+    "div[data-testid='stFormSubmitButton']>button"
+    "{height:2.9rem;white-space:nowrap;padding:0 1rem;border-radius:.6rem;border:1px solid rgba(0,0,0,.05);"
+    "background:linear-gradient(180deg,#0f62ff,#084dce);color:#fff;font-weight:700;letter-spacing:.01em;"
+    "box-shadow:0 8px 16px rgba(15,98,255,.28)}"
+    "div[data-testid='stButton']>button p,div[data-testid='stDownloadButton']>button p,"
+    "div[data-testid='stFormSubmitButton']>button p{color:#fff;font-weight:700}"
+    "div[data-testid='stButton']>button:hover,div[data-testid='stDownloadButton']>button:hover,"
+    "div[data-testid='stFormSubmitButton']>button:hover{background:linear-gradient(180deg,#2a74ff,#0a58e0);"
+    "border-color:rgba(0,0,0,.05);color:#fff}"
+    "div[data-testid='stButton']>button[kind='primary']{box-shadow:0 0 0 3px rgba(15,98,255,.25),"
+    "0 8px 16px rgba(15,98,255,.28)}"
+    "</style>",
+    unsafe_allow_html=True,
+)
 if menu[0].button("Back To Landing", use_container_width=True):
     st.query_params.clear()
     st.rerun()

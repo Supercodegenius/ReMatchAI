@@ -1293,6 +1293,7 @@ with st.sidebar:
         "Bulk Name Matching": "📦 Bulk Name Matching",
         "AirlineMatching": "✈️ Airline Matching",
         "Tower Matching": "🗼 Tower Matching",
+        "ReCopilot": "🧭 Re Copilot",
         "Admin": "⚙️ Admin",
         "SLM": "🤖 SLM",
     }
@@ -1312,6 +1313,9 @@ with st.sidebar:
             key=f"menu_btn_{key}",
             disabled=key in disabled_menu_items,
         ):
+            if key == "ReCopilot":
+                st.query_params["page"] = "reinsights"
+                st.rerun()
             st.session_state["sidebar_menu"] = key
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)

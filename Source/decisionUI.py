@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 
 from dataclasses import replace
@@ -166,7 +166,7 @@ def banner() -> None:
 
 
 if page == "reinsights":
-    st.title("Reinsurance Copilot")
+    st.title("Re Copilot")
     st.caption("Describe a submission in plain words. I will recommend write or not, line size, price, capital, retro and ROE.")
     hist = st.session_state.setdefault("copilot_chat", [{"role": "assistant", "content": cp.HELP}])
     for m in hist:
@@ -216,7 +216,7 @@ if page == "reinsights":
         st.divider()
         banner()
 elif page == "decision":
-    st.title("Reinsurance Copilot")
+    st.title("Re Copilot")
     st.caption("Line size: how much to write and where to stop.")
     banner()
     rows = pd.DataFrame(curve(deal, port))
@@ -235,7 +235,7 @@ elif page == "decision":
     if st.button("See full recommendation", type="primary"):
         _go("decision_ai")
 elif page == "decision_ai":
-    st.title("Reinsurance Copilot")
+    st.title("Re Copilot")
     st.caption("Recommendation: write or not, at what size and price.")
     banner()
     st.write("")
@@ -267,7 +267,7 @@ elif page == "decision_ai":
         _go("decision")
 
 else:
-    st.title("Reinsurance Copilot")
+    st.title("Re Copilot")
     st.subheader("Cedant profitability")
     st.caption("Which buyers make money? Scored from each cedant's own premium, loss development and commission.")
     st.download_button("Download CSV template", template_csv(), file_name="cedant_history_template.csv",

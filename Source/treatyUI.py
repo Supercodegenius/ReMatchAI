@@ -6,7 +6,7 @@ import treaty_engine as te
 
 te = importlib.reload(te)
 
-st.title("Reinsurance Copilot")
+st.title("Re Copilot")
 st.subheader("Treaty Summary")
 st.caption("Upload a treaty (PDF, Word or text). A local Llama model reads it and pulls out the key terms.")
 

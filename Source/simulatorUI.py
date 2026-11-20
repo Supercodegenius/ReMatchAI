@@ -8,7 +8,7 @@ se = importlib.reload(se)
 
 from cedant_engine import demo_history, score_cedants
 
-st.title("Reinsurance Copilot")
+st.title("Re Copilot")
 st.subheader("Treaty Impact Simulator")
 st.caption("Change a limit and a rate on one cedant and class, and see the effect on the whole book.")
 
